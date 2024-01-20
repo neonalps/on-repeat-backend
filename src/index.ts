@@ -1,5 +1,5 @@
 import fastify from "fastify";
-import { getAuthTokenSigningKey, getCorsConfig, getNodeEnv, getServerHost, getServerPort } from "@src/config";
+import { getAuthTokenAudience, getAuthTokenIssuer, getAuthTokenSigningKey, getCorsConfig, getNodeEnv, getServerHost, getServerPort } from "@src/config";
 import logger from "@src/log/logger";
 import { DependencyHelper } from "@src/di/helper";
 import { RouteManager } from "@src/router/manager";
@@ -17,7 +17,7 @@ const start = async () =>  {
   await initAndTestDatabaseConnection();
   DependencyHelper.initDependencies();
   JobRepository.initJobs();
-  RouteManager.registerJwtParser(server, getAuthTokenSigningKey());
+  RouteManager.registerJwtParser(server, getAuthTokenSigningKey(), getAuthTokenIssuer(), getAuthTokenAudience());
   RouteManager.registerRoutes(server, getRouteProviders());
   await CorsManager.registerCorsConfig(server, getCorsConfig());
 

@@ -7,6 +7,7 @@ import { Jwt } from "@src/models/interface/jwt";
 
 export interface TokenConfig {
     accessTokenValiditySeconds: number;
+    refreshTokenValiditySeconds: number;
     audience: string;
     issuer: string;
     signingKey: string;
@@ -18,6 +19,7 @@ export class AuthService {
     private readonly timeSource: TimeSource;
 
     private static readonly TOKEN_TYPE_ACCESS = "ACCESS";
+    private static readonly TOKEN_TYPE_REFRESH = "REFRESH";
 
     constructor(tokenConfig: TokenConfig, timeSource: TimeSource) {
         this.tokenConfig = requireNonNull(tokenConfig);
@@ -30,6 +32,11 @@ export class AuthService {
         const accessToken = this.issueAccessToken(subject, scopes);
         return this.signToken(accessToken.convertToJwt());
     }
+
+    public createSignedRefreshToken(subject: string, scopes: Set<string>): string {
+        const refreshToken = this.issueRefreshToken(subject, scopes);
+        return this.signToken(refreshToken.convertToJwt());
+    }
     
     private issueAccessToken(subject: string, scopes: Set<string>): AuthToken {
         const now = this.timeSource.getCurrentUnixTimestamp();
@@ -38,6 +45,23 @@ export class AuthService {
         return AuthToken.Builder
             .withTokenType(AuthService.TOKEN_TYPE_ACCESS)
             .withIssuer(this.tokenConfig.issuer)
+            .withAudience(this.tokenConfig.audience)
+            .withSubject(subject)
+            .withScopes(scopes)
+            .withIssuedAt(now)
+            .withNotBefore(now)
+            .withExpiresAt(expiresAt)
+            .build();
+    }
+
+    private issueRefreshToken(subject: string, scopes: Set<string>): AuthToken {
+        const now = this.timeSource.getCurrentUnixTimestamp();
+        const expiresAt = now + this.tokenConfig.refreshTokenValiditySeconds;
+
+        return AuthToken.Builder
+            .withTokenType(AuthService.TOKEN_TYPE_REFRESH)
+            .withIssuer(this.tokenConfig.issuer)
+            .withAudience(this.tokenConfig.audience)
             .withSubject(subject)
             .withScopes(scopes)
             .withIssuedAt(now)
@@ -51,8 +75,10 @@ export class AuthService {
     }
 
     private validateConfig(): void {
-        validateNotNull(this.tokenConfig.accessTokenValiditySeconds, "tokenConfig.accessTokenValiditiySeconds");
+        validateNotNull(this.tokenConfig.accessTokenValiditySeconds, "tokenConfig.accessTokenValiditySeconds");
+        validateNotNull(this.tokenConfig.refreshTokenValiditySeconds, "tokenConfig.refreshTokenValiditySeconds");
         validateNotBlank(this.tokenConfig.issuer, "tokenConfig.issuer");
+        validateNotBlank(this.tokenConfig.audience, "tokenConfig.audience");
         validateNotBlank(this.tokenConfig.signingKey, "tokenConfig.signingKey");
     }
 

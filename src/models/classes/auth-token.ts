@@ -59,6 +59,7 @@ export class AuthToken {
     
     public convertToJwt(): Jwt {
         return {
+            type: this.tokenType,
             iss: this.issuer,
             aud: this.audience,
             sub: this.subject,

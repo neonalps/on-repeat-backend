@@ -6,15 +6,22 @@ import { AuthService } from "@src/modules/auth/service";
 import { SpotifyClient } from "@src/modules/music-provider/spotify/client";
 import { OauthLoginHandler } from "@src/api/v1/login/oauth/handler";
 import { OauthLoginRouteProvider } from "@src/api/v1/login/oauth/route-provider";
+import { RefreshTokenHandler } from "@src/api/v1/login/refresh-token/handler";
+import { TimeSource } from "@src/util/time";
+import { getTokenConfig } from "@src/config";
+import { RefreshTokenRouteProvider } from "@src/api/v1/login/refresh-token/route-provider";
 
 export function getLoginRouteProviders(): RouteProvider<any, any>[] {
     const accountService = dependencyManager.get<AccountService>(Dependencies.AccountService);
     const authService = dependencyManager.get<AuthService>(Dependencies.AuthService);
     const spotifyClient = dependencyManager.get<SpotifyClient>(Dependencies.SpotifyClient);
+    const timeSource = dependencyManager.get<TimeSource>(Dependencies.TimeSource);
 
     const oauthLoginHandler = new OauthLoginHandler(authService, accountService, spotifyClient);
+    const refreshTokenHandler = new RefreshTokenHandler(authService, timeSource, getTokenConfig());
 
     return [
         new OauthLoginRouteProvider(oauthLoginHandler),
+        new RefreshTokenRouteProvider(refreshTokenHandler),
     ];
 }
