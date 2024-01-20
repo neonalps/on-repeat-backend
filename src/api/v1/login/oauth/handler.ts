@@ -43,7 +43,11 @@ export class OauthLoginHandler implements RouteHandler<OauthLoginRequestDto, Log
             throw new Error("Failed to load account");
         }
 
-        const accessToken = this.authService.createSignedAccessToken(identity.publicId, new Set([SCOPE_USER]));
+        const userId = identity.publicId;
+        const tokenScopes: Set<string> = new Set([SCOPE_USER]);
+
+        const accessToken = this.authService.createSignedAccessToken(userId, tokenScopes);
+        const refreshToken = this.authService.createSignedRefreshToken(userId, tokenScopes);
 
         return {
             identity: {
@@ -53,6 +57,7 @@ export class OauthLoginHandler implements RouteHandler<OauthLoginRequestDto, Log
             },
             token: {
                 accessToken,
+                refreshToken,
             }
         }
     }

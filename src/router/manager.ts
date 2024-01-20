@@ -24,10 +24,14 @@ export class RouteManager {
         }
     }
 
-    public static registerJwtParser(server: FastifyInstance, secret: string): void {
+    public static registerJwtParser(server: FastifyInstance, secret: string, issuer: string, audience: string): void {
         server.register(fastifyJwt, {
             formatUser: (user: any) => user.sub,
             secret,
+            verify: {
+                allowedAud: audience,
+                allowedIss: issuer,
+            }
         });
     }
 
