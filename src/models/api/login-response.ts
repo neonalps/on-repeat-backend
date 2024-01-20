@@ -6,5 +6,6 @@ export interface LoginResponseDto {
     }
     token: {
         accessToken: string;
+        refreshToken: string;
     }
 }

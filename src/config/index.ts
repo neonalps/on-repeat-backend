@@ -15,6 +15,7 @@ const dbConnectionUrl = env.get('DB_CONNECTION_URL').required().asString();
 const serverHost = env.get("HOST").required().asString();
 const serverPort = env.get('PORT').required().asPortNumber();
 const accessTokenValiditySeconds = env.get("ACCESS_TOKEN_VALIDITY_SECONDS").required().asIntPositive();
+const refreshTokenValiditySeconds = env.get("REFRESH_TOKEN_VALIDITY_SECONDS").required().asIntPositive();
 const apiAlbumsPath = env.get('API_ALBUMS_PATH').required().asString();
 const apiArtistsPath = env.get('API_ARTISTS_PATH').required().asString();
 const apiTracksPath = env.get('API_TRACKS_PATH').required().asString();
@@ -72,6 +73,7 @@ const spotifyClientConfig: SpotifyClientConfig = {
 
 const tokenConfig: TokenConfig = {
     accessTokenValiditySeconds,
+    refreshTokenValiditySeconds,
     audience: authTokenAudience,
     issuer: authTokenIssuer,
     signingKey: authTokenSigningKey,
@@ -85,6 +87,7 @@ export const getDbConnectionUrl = () => dbConnectionUrl;
 export const getServerHost = () => serverHost;
 export const getServerPort = () => serverPort;
 export const getAccessTokenValiditySeconds = () => accessTokenValiditySeconds;
+export const getRefreshTokenValiditySeconds = () => refreshTokenValiditySeconds;
 export const getAuthTokenAudience = () => authTokenAudience;
 export const getAuthTokenIssuer = () => authTokenIssuer;
 export const getAuthTokenSigningKey = () => authTokenSigningKey;
