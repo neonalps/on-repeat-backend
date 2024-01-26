@@ -34,6 +34,7 @@ import { PaginationService } from "@src/modules/pagination/service";
 import { ApiHelper } from "@src/api/helper";
 import { ChartService } from "@src/modules/chart/service";
 import { SearchService } from "@src/modules/search/search";
+import { AuthHelper } from "@src/modules/auth/helper";
 
 export class DependencyHelper {
 
@@ -100,6 +101,8 @@ export class DependencyHelper {
 
         const paginationService = new PaginationService();
 
+        const authHelper = new AuthHelper(playedTrackService);
+
         const dependencies: Map<Dependencies, any> = new Map();
         
         dependencies.set(Dependencies.AccountService, accountService);
@@ -107,6 +110,7 @@ export class DependencyHelper {
         dependencies.set(Dependencies.AccountJobScheduleService, accountJobScheduleService);
         dependencies.set(Dependencies.AccountTokenService, accountTokenService);
         dependencies.set(Dependencies.ApiHelper, apiHelper);
+        dependencies.set(Dependencies.AuthHelper, authHelper);
         dependencies.set(Dependencies.AuthService, authService);
         dependencies.set(Dependencies.CatalogueService, catalogueService);
         dependencies.set(Dependencies.ChartService, chartService);
