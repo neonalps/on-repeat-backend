@@ -70,6 +70,13 @@ export class PlayedTrackService {
         return this.mapper.getById(id);
     }
 
+    public async getByAccountIdAndPlayedTrackId(accountId: number, playedTrackId: number): Promise<PlayedTrackDao | null> {
+        validateNotNull(accountId, "accountId");
+        validateNotNull(playedTrackId, "playedTrackId");
+
+        return this.mapper.getByAccountIdAndPlayedTrackId(accountId, playedTrackId);
+    }
+
     public async getAllForAccountPaginated(accountId: number, paginationParams: GetPlayedTracksPaginationParams): Promise<PlayedTrackDetailsDao[]> {
         validateNotNull(accountId, "accountId");
         validateNotNull(paginationParams, "paginationParams");
@@ -112,7 +119,12 @@ export class PlayedTrackService {
         validateNotNull(paginationParams.order, "paginationParams.order");
         validateNotNull(paginationParams.lastSeen, "paginationParams.lastSeen");
 
-        return this.mapper.getPlayedTrackHistoryForAccountPaginated(accountId, trackId, null, null, paginationParams.lastSeen, paginationParams.limit, paginationParams.order);
+        const track = await this.catalogueService.getTrackById(trackId);
+        if (track === null) {
+            throw new Error(`Played track history requested for track ${trackId} but it doesn't exist`);
+        }
+
+        return this.mapper.getPlayedTrackHistoryForAccountPaginated(accountId, track.bucket, null, null, paginationParams.lastSeen, paginationParams.limit, paginationParams.order);
     }
 
     public async getArtistTracksOffsetPaginated(accountId: number, artistId: number, paginationParams: GetArtistPlayedTracksPaginationParams): Promise<ArtistPlayedTrackDetailsDao[]> {
@@ -204,8 +216,12 @@ export class PlayedTrackService {
         validateNotNull(accountId, "accountId");
         validateNotNull(trackId, "trackId");
 
-        const playedInfo = await this.mapper.getPlayedInfoForTrack(accountId, trackId); 
+        const track = await this.catalogueService.getTrackById(trackId);
+        if (track === null) {
+            throw new Error(`Played info requested for track ${trackId} but it doesn't exist`);
+        }
 
+        const playedInfo = await this.mapper.getPlayedInfoForTrack(accountId, track.bucket); 
         if (playedInfo === null) {
             return PlayedTrackService.EMPTY_PLAYED_INFO;
         }

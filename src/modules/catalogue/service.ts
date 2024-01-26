@@ -25,6 +25,7 @@ interface TrackBucketContext {
     trackId: number;
     albumTotalTracks: number | null;
     albumReleaseDate: Date | null;
+    albumType: string | null;
 };
 
 export class CatalogueService {
@@ -334,6 +335,7 @@ export class CatalogueService {
                 trackId: track.id,
                 albumReleaseDate: null,
                 albumTotalTracks: null,
+                albumType: null,
             };
         }
 
@@ -343,6 +345,7 @@ export class CatalogueService {
                 trackId: track.id,
                 albumReleaseDate: null,
                 albumTotalTracks: null,
+                albumType: null,
             }
         }
 
@@ -350,6 +353,7 @@ export class CatalogueService {
             trackId: track.id,
             albumReleaseDate: album.releaseDate,
             albumTotalTracks: album.totalTracks,
+            albumType: album.albumType,
         };
     }
 

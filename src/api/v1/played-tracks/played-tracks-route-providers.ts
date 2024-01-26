@@ -12,10 +12,11 @@ import { GetPlayedTrackHistoryPaginatedRouteProvider } from "@src/api/v1/played-
 import { GetPlayedTrackHistoryPaginatedHandler } from "@src/api/v1/played-tracks/get-played-track-history-paginated/handler";
 import { UpdatePlayedTrackByIdHandler } from "@src/api/v1/played-tracks/update-by-id/handler";
 import { UpdatePlayedTrackByIdRouteProvider } from "@src/api/v1/played-tracks/update-by-id/route-provider";
-
+import { AuthHelper } from "@src/modules/auth/helper";
 
 export function getPlayedTracksApiRouteProviders() {
     const apiHelper = dependencyManager.get<ApiHelper>(Dependencies.ApiHelper);
+    const authHelper = dependencyManager.get<AuthHelper>(Dependencies.AuthHelper);
     const catalogueService = dependencyManager.get<CatalogueService>(Dependencies.CatalogueService);
     const paginationService = dependencyManager.get<PaginationService>(Dependencies.PaginationService);
     const playedTrackService = dependencyManager.get<PlayedTrackService>(Dependencies.PlayedTrackService);
@@ -23,7 +24,7 @@ export function getPlayedTracksApiRouteProviders() {
     const getAllPaginatedHandler = new GetPlayedTracksPaginatedHandler(apiHelper, paginationService, playedTrackService);
     const getTrackHistoryPaginatedHandler = new GetPlayedTrackHistoryPaginatedHandler(apiHelper, paginationService, playedTrackService);
     const getArtistPlayedTracksPaginatedHandler = new GetArtistPlayedTracksPaginatedHandler(apiHelper, catalogueService, paginationService, playedTrackService);
-    const updatePlayedTrackByIdHandler = new UpdatePlayedTrackByIdHandler(apiHelper, playedTrackService);
+    const updatePlayedTrackByIdHandler = new UpdatePlayedTrackByIdHandler(apiHelper, authHelper, playedTrackService);
 
     return [
         new GetPlayedTracksPaginatedRouteProvider(getAllPaginatedHandler),

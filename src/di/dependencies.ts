@@ -4,6 +4,7 @@ export enum Dependencies {
     AccountJobScheduleService,
     AccountTokenService,
     ApiHelper,
+    AuthHelper,
     AuthService,
     CatalogueService,
     ChartService,

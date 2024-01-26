@@ -61,6 +61,30 @@ export class PlayedTrackMapper {
         return PlayedTrackDao.fromDaoInterface(result[0]);
     }
 
+    public async getByAccountIdAndPlayedTrackId(accountId: number, playedTrackId: number): Promise<PlayedTrackDao | null> {
+        const result = await sql<PlayedTrackDaoInterface[]>`
+            select
+                id,
+                account_id,
+                track_id,
+                music_provider_id,
+                played_at,
+                include_in_statistics,
+                created_at
+            from
+                played_track
+            where
+                id = ${ playedTrackId } and
+                account_id = ${ accountId }
+        `;
+    
+        if (!result || result.length === 0) {
+            return null;
+        }
+    
+        return PlayedTrackDao.fromDaoInterface(result[0]);
+    }
+
     public async updateById(id: number, includeInStatistics: boolean): Promise<void> {
         await sql`
             update played_track set
@@ -101,7 +125,7 @@ export class PlayedTrackMapper {
         return this.populateAndConvertTrackDetailsResult(result);
     }
 
-    public async getPlayedTrackHistoryForAccountPaginated(accountId: number, trackId: number, from: Date | null, to: Date | null, lastSeenPlayedAt: Date, limit: number, order: SortOrder): Promise<PlayedTrackHistoryDao[]> {
+    public async getPlayedTrackHistoryForAccountPaginated(accountId: number, bucketId: number, from: Date | null, to: Date | null, lastSeenPlayedAt: Date, limit: number, order: SortOrder): Promise<PlayedTrackHistoryDao[]> {
         const sqlSortOrder = this.determineSortOrder(order);
 
         const result = await sql<PlayedTrackHistoryDaoInterface[]>`
@@ -113,10 +137,11 @@ export class PlayedTrackMapper {
                 pt.include_in_statistics as include_in_statistics
             from
                 played_track pt left join
-                music_provider mp on mp.id = pt.music_provider_id
+                music_provider mp on mp.id = pt.music_provider_id left join
+                track t on t.id = pt.track_id
             where
                 pt.account_id = ${ accountId }
-                and pt.track_id = ${ trackId }
+                and t.bucket = ${ bucketId }
                 ${isDefined(from) ? this.wherePlayedAtFrom(from as Date) : sql``}
                 ${isDefined(to) ? this.wherePlayedAtTo(to as Date) : sql``}
                 and pt.played_at ${order === SortOrder.ASCENDING ? sql`>` : sql`<`} ${ lastSeenPlayedAt }
@@ -287,17 +312,18 @@ export class PlayedTrackMapper {
         return PlayedInfoDao.fromDaoInterface(result[0]);
     }
 
-    public async getPlayedInfoForTrack(accountId: number, trackId: number): Promise<PlayedInfoDao | null> {
+    public async getPlayedInfoForTrack(accountId: number, bucketId: number): Promise<PlayedInfoDao | null> {
         const result = await sql<PlayedInfoDaoInterface[]>`
             select
                 min(pt.played_at) as first_played_at,
                 max(pt.played_at) as last_played_at,
                 count(pt.played_at)::int as times_played
             from
-                played_track pt
+                track t left join
+                played_track pt on pt.track_id = t.id
             where
                 pt.account_id = ${ accountId }
-                and pt.track_id = ${ trackId }
+                and t.bucket = ${ bucketId }
                 and pt.include_in_statistics = true
         `;
 
