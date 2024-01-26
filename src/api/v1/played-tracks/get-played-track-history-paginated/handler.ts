@@ -7,14 +7,16 @@ import { AuthenticationContext, RouteHandler } from "@src/router/types";
 import { isDefined, isNotDefined, requireNonNull } from "@src/util/common";
 import { PlayedHistoryApiDto } from "@src/models/api/played-history";
 import { GetPlayedTrackHistoryPaginatedRequestDto } from "@src/models/api/get-played-track-history-paginated-request";
-import { PlayedTrackHistoryDao } from "@src/models/classes/dao/played-track-history";
+import { ApiHelper } from "@src/api/helper";
 
 export class GetPlayedTrackHistoryPaginatedHandler implements RouteHandler<GetPlayedTrackHistoryPaginatedRequestDto, PaginatedResponseDto<PlayedHistoryApiDto>> {
 
+    private readonly apiHelper: ApiHelper;
     private readonly paginationService: PaginationService;
     private readonly playedTrackService: PlayedTrackService;
 
-    constructor(paginationService: PaginationService, playedTrackService: PlayedTrackService) {
+    constructor(apiHelper: ApiHelper, paginationService: PaginationService, playedTrackService: PlayedTrackService) {
+        this.apiHelper = requireNonNull(apiHelper);
         this.paginationService = requireNonNull(paginationService);
         this.playedTrackService = requireNonNull(playedTrackService);
     }
@@ -24,24 +26,12 @@ export class GetPlayedTrackHistoryPaginatedHandler implements RouteHandler<GetPl
         this.paginationService.validateQueryParams(dto);
         const paginationParams = this.getPaginationParams(dto);
         const playedTracks = await this.playedTrackService.getPlayedTrackHistoryForAccountPaginated(accountId, dto.trackId, paginationParams);
-        const items = playedTracks.map(item => this.mapToApiDto(item));
+        const items = playedTracks.map(item => this.apiHelper.convertPlayedHistoryApiDto(item));
 
         return {
             nextPageKey: this.buildNextPageKey(items, paginationParams),
             items,
         }
-    }
-
-    private mapToApiDto(dao: PlayedTrackHistoryDao): PlayedHistoryApiDto {
-        return {
-            playedTrackId: dao.id,
-            playedAt: dao.playedAt,
-            includeInStatistics: dao.includeInStatistics,
-            musicProvider: {
-                id: dao.musicProviderId,
-                name: dao.musicProviderName,
-            },
-        };
     }
 
     private getPaginationParams(dto: GetPlayedTrackHistoryPaginatedRequestDto): GetPlayedTrackHistoryPaginationParams {

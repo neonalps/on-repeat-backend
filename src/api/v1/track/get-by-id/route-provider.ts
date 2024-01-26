@@ -20,7 +20,14 @@ export class GetTrackByIdRouteProvider implements RouteProvider<GetTrackByIdRequ
                 properties: {
                     trackId: { type: 'string' },
                 },
-            }
+            },
+            querystring: {
+                type: 'object',
+                required: [],
+                properties: {
+                    includeHistory: { type: 'boolean' },
+                },
+            },
         };
 
         return {
