@@ -8,6 +8,7 @@ import { AccountService } from "@src/modules/account/service";
 import { Dependencies } from "@src/di/dependencies";
 import { IllegalStateError } from "@src/api/error/illegal-state-error";
 import { isDefined } from "@src/util/common";
+import { AuthenticationError } from "@src/api/error/authentication-error";
 
 export class RouteManager {
 
@@ -68,10 +69,13 @@ export class RouteManager {
                 const body = RouteManager.mergeRequestContext(request) as unknown;
 
                 try {
-                    const response = await route.handler.handle(principal, body) as any;
+                    const response = await route.handler.handle(principal, body);
                     this.sendSuccessResponse(reply, route, response);
                 } catch (ex) {
-                    if (ex instanceof IllegalStateError) {
+                    if (ex instanceof AuthenticationError) {
+                        this.sendErrorResponse(reply, route, 401, ex);
+                        return;
+                    } else if (ex instanceof IllegalStateError) {
                         this.sendErrorResponse(reply, route, 400, ex);
                         return;
                     }
