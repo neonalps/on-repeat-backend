@@ -18,6 +18,7 @@ import { AlbumDao } from "@src/models/classes/dao/album";
 import { PlayedStatsDao } from "@src/models/classes/dao/played-stats";
 import { SimpleArtistDao } from "@src/models/classes/dao/artist-simple";
 import { ArtistDao } from "@src/models/classes/dao/artist";
+import { PlayedTrackDetailsNoAlbumImagesDao } from "@src/models/classes/dao/played-track-details-no-album-images";
 
 export interface GetPlayedTracksPaginationParams extends PaginationParams<Date> {};
 export interface GetPlayedTrackHistoryPaginationParams extends PaginationParams<Date> {};
@@ -79,63 +80,28 @@ export class PlayedTrackService {
         const orderedIds = await this.getAllOrderedPaginatedResult(accountId, paginationParams.lastSeen, paginationParams.limit, paginationParams.order);
 
         const playedTrackDetails = await this.mapper.getAllForAccountPaginatedDetails(orderedIds);
-
-        const albumIds = playedTrackDetails
-            .map(item => item.album?.id)
-            .filter(item => isDefined(item)) as number[];
-
-        const albums = await this.catalogueService.getMultipleAlbumsById(albumIds);
-
-        // TODO get images
-        const artistIds = new Set<number>();
-        for (const playedTrack of playedTrackDetails) {
-            playedTrack.artists.forEach(artist => artistIds.add(artist.id));
-        }
-        const artists = await this.catalogueService.getMultipleArtistsById(Array.from(artistIds));
-
-        const playedTrackDetailsWithAlbumImages = playedTrackDetails.map(item => {
-            let album: SimpleAlbumDao | null = null;
-            if (isDefined(item.album)) {
-                const albumIdName = item.album as IdNameDao;
-
-                const albumDao = albums.find(albumItem => albumItem.id === albumIdName.id);
-                const albumImages = isDefined(albumDao) ? (albumDao as AlbumDao).images : [];
-
-                album = SimpleAlbumDao.Builder
-                    .withId(albumIdName.id)
-                    .withName(albumIdName.name)
-                    .withImages(albumImages)
-                    .build();
-            }
-
-            const trackArtists: SimpleArtistDao[] = [];
-            for (const trackArtistItem of item.artists) {
-                const trackArtist = artists.find(artist => artist.id === trackArtistItem.id);
-                if (isNotDefined(trackArtist)) {
-                    continue;
-                }
-
-                trackArtists.push(
-                    SimpleArtistDao.Builder
-                        .withId((trackArtist as ArtistDao).id)
-                        .withName((trackArtist as ArtistDao).name)
-                        .withImages((trackArtist as ArtistDao).images)
-                        .build()
-                );
-            }
-
-            return PlayedTrackDetailsDao.Builder
-                .withPlayedTrackId(item.playedTrackId)
-                .withPlayedAt(item.playedAt)
-                .withTrack(item.track)
-                .withArtists(trackArtists)
-                .withAlbum(album)
-                .withMusicProvider(item.musicProvider)
-                .withIncludeInStatistics(item.includeInStatistics)
-                .build();
-        });
-
+        const playedTrackDetailsWithAlbumImages = await this.loadPlayedTrackDetailsWithArtistImages(playedTrackDetails);
         return playedTrackDetailsWithAlbumImages.sort(PlayedTrackService.playedAtComparator(paginationParams.order));
+    }
+
+    public async updateById(playedTrackId: number, includeInStatistics: boolean): Promise<PlayedTrackDetailsDao> {
+        validateNotNull(playedTrackId, "playedTrackId");
+        validateNotNull(includeInStatistics, "includeInStatistics");
+
+        await this.mapper.updateById(playedTrackId, includeInStatistics);
+
+        const updatedTrack = await this.getById(playedTrackId);
+        if (isNotDefined(updatedTrack)) {
+            throw new Error(`Cannot update played track with ID ${playedTrackId} because it doesn't exist`);
+        }
+
+        const playedTrackDetails = await this.mapper.getAllForAccountPaginatedDetails([(updatedTrack as PlayedTrackDao).id]);
+        const playedTrackDetailsWithAlbumImages = await this.loadPlayedTrackDetailsWithArtistImages(playedTrackDetails);
+        if (playedTrackDetailsWithAlbumImages.length !== 1) {
+            throw new Error(`Illegal state - there must only be one played track at this point, but there are not for ID ${playedTrackId}`);
+        }
+
+        return playedTrackDetailsWithAlbumImages[0];
     }
 
     public async getPlayedTrackHistoryForAccountPaginated(accountId: number, trackId: number, paginationParams: GetPlayedTrackHistoryPaginationParams): Promise<PlayedTrackHistoryDao[]> {
@@ -278,6 +244,72 @@ export class PlayedTrackService {
 
             return second - first;
         };
+    }
+
+    private mapToPlayedTrackDetailsDao(
+        item: PlayedTrackDetailsNoAlbumImagesDao, 
+        artists: ArtistDao[],  
+        albums: AlbumDao[],
+    ): PlayedTrackDetailsDao {
+        let album: SimpleAlbumDao | null = null;
+        if (isDefined(item.album)) {
+            const albumIdName = item.album as IdNameDao;
+
+            const albumDao = albums.find(albumItem => albumItem.id === albumIdName.id);
+            const albumImages = isDefined(albumDao) ? (albumDao as AlbumDao).images : [];
+
+            album = SimpleAlbumDao.Builder
+                .withId(albumIdName.id)
+                .withName(albumIdName.name)
+                .withImages(albumImages)
+                .build();
+        }
+
+        const trackArtists: SimpleArtistDao[] = [];
+        for (const trackArtistItem of item.artists) {
+            const trackArtist = artists.find(artist => artist.id === trackArtistItem.id);
+            if (isNotDefined(trackArtist)) {
+                continue;
+            }
+
+            trackArtists.push(
+                SimpleArtistDao.Builder
+                    .withId((trackArtist as ArtistDao).id)
+                    .withName((trackArtist as ArtistDao).name)
+                    .withImages((trackArtist as ArtistDao).images)
+                    .build()
+            );
+        }
+
+        return PlayedTrackDetailsDao.Builder
+            .withPlayedTrackId(item.playedTrackId)
+            .withPlayedAt(item.playedAt)
+            .withTrack(item.track)
+            .withArtists(trackArtists)
+            .withAlbum(album)
+            .withMusicProvider(item.musicProvider)
+            .withIncludeInStatistics(item.includeInStatistics)
+            .build();
+    }
+
+    private async loadPlayedTrackDetailsWithArtistImages(playedTrackDetails: PlayedTrackDetailsNoAlbumImagesDao[]): Promise<PlayedTrackDetailsDao[]> {
+        if (playedTrackDetails.length === 0) {
+            return [];
+        }
+
+        const albumIds = playedTrackDetails
+            .map(item => item.album?.id)
+            .filter(item => isDefined(item)) as number[];
+
+        const artistIds = new Set<number>();
+        for (const playedTrack of playedTrackDetails) {
+            playedTrack.artists.forEach(artist => artistIds.add(artist.id));
+        }
+
+        const artists = await this.catalogueService.getMultipleArtistsById(Array.from(artistIds));
+        const albums = await this.catalogueService.getMultipleAlbumsById(albumIds);
+
+        return playedTrackDetails.map(item => this.mapToPlayedTrackDetailsDao(item, artists, albums));
     }
 
 }

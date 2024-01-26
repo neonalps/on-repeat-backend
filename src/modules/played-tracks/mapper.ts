@@ -61,6 +61,14 @@ export class PlayedTrackMapper {
         return PlayedTrackDao.fromDaoInterface(result[0]);
     }
 
+    public async updateById(id: number, includeInStatistics: boolean): Promise<void> {
+        await sql`
+            update played_track set
+                include_in_statistics = ${ includeInStatistics }
+            where id = ${ id }
+            `;
+    }
+
     public async getAllForAccountPaginatedDetails(orderedIds: number[]): Promise<PlayedTrackDetailsNoAlbumImagesDao[]> {
         const result = await sql<PlayedTrackDetailsDaoInterface[]>`
             select

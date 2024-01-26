@@ -4,6 +4,8 @@ import { AccountTokenApiDto } from "@src/models/api/account-token";
 import { AlbumApiDto } from "@src/models/api/album";
 import { ArtistApiDto } from "@src/models/api/artist";
 import { ImageApiDto } from "@src/models/api/image";
+import { PlayedHistoryApiDto } from "@src/models/api/played-history";
+import { PlayedTrackApiDto } from "@src/models/api/played-track";
 import { TrackApiDto } from "@src/models/api/track";
 import { AccountJobScheduleDao } from "@src/models/classes/dao/account-job-schedule";
 import { AccountTokenDao } from "@src/models/classes/dao/account-token";
@@ -11,6 +13,8 @@ import { AlbumDao } from "@src/models/classes/dao/album";
 import { SimpleAlbumDao } from "@src/models/classes/dao/album-simple";
 import { ArtistDao } from "@src/models/classes/dao/artist";
 import { ImageDao } from "@src/models/classes/dao/image";
+import { PlayedTrackDetailsDao } from "@src/models/classes/dao/played-track-details";
+import { PlayedTrackHistoryDao } from "@src/models/classes/dao/played-track-history";
 import { SimpleTrackDetailsDao } from "@src/models/classes/dao/simple-track-details";
 import { TrackDao } from "@src/models/classes/dao/track";
 import { isDefined, removeNull, requireNonNull } from "@src/util/common";
@@ -143,6 +147,50 @@ export class ApiHelper {
             startedAt: item.startedAt || undefined,
             finishedAt: item.finishedAt || undefined,
             errorMessage: item.errorMessage || undefined,
+        };
+    }
+
+    public convertPlayedHistoryApiDto(dao: PlayedTrackHistoryDao): PlayedHistoryApiDto {
+        return {
+            playedTrackId: dao.id,
+            playedAt: dao.playedAt,
+            includeInStatistics: dao.includeInStatistics,
+            musicProvider: {
+                id: dao.musicProviderId,
+                name: dao.musicProviderName,
+            },
+        };
+    }
+
+    public convertPlayedTrackApiDto(item: PlayedTrackDetailsDao): PlayedTrackApiDto {
+        let albumApiDto: AlbumApiDto | null = null;
+
+        if (isDefined(item.album)) {
+            const album = item.album as SimpleAlbumDao;
+
+            albumApiDto = {
+                id: album.id,
+                name: album.name,
+                href: this.getAlbumResourceUrl(album.id),
+                images: this.convertImageApiDtos(Array.from(album.images)),
+            }
+        }
+
+        return {
+            playedTrackId: item.playedTrackId,
+            playedAt: item.playedAt,
+            includeInStatistics: item.includeInStatistics,
+            track: {
+                id: item.track.id,
+                name: item.track.name,
+                href: this.getTrackResourceUrl(item.track.id),
+                artists: this.convertArtistApiDtos(Array.from(item.artists)),
+                album: albumApiDto,
+            },
+            musicProvider: {
+                id: item.musicProvider.id,
+                name: item.musicProvider.name,
+            },
         };
     }
 
