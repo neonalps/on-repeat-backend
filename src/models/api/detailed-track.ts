@@ -1,6 +1,8 @@
 import { PlayedInfoApiDto } from "@src/models/api/played-info";
 import { ArtistApiDto } from "@src/models/api/artist";
 import { AlbumApiDto } from "@src/models/api/album";
+import { PaginatedResponseDto } from "@src/models/api/paginated-response";
+import { PlayedHistoryApiDto } from "@src/models/api/played-history";
 
 export interface DetailedTrackApiDto {
     id: number;
@@ -14,4 +16,5 @@ export interface DetailedTrackApiDto {
     discNumber: number | null;
     trackNumber: number | null;
     durationMs: number | null;
+    history?: PaginatedResponseDto<PlayedHistoryApiDto>;
 }
