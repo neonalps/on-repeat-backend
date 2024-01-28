@@ -284,6 +284,15 @@ export class CatalogueService {
      * Returns the ordered tracks for this bucket. The first element is the primary track for the bucket.
      */
     private compareTrackBucketContexts(first: TrackBucketContext, second: TrackBucketContext): number {
+        const firstAlbumType = first.albumType;
+        const secondAlbumType = second.albumType;
+
+        if (firstAlbumType === 'compilation' && secondAlbumType !== 'compilation') {
+            return 1;
+        } else if (firstAlbumType !== 'compilation' && secondAlbumType === 'compilation') {
+            return -1;
+        }
+
         const firstReleaseDate = first.albumReleaseDate;
         const secondReleaseDate = second.albumReleaseDate;
 
