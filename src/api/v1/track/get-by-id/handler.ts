@@ -9,6 +9,7 @@ import { ApiHelper } from "@src/api/helper";
 import { CatalogueService } from "@src/modules/catalogue/service";
 import { GetTrackByIdRequestDto } from "@src/models/api/get-track-by-id-request";
 import { DetailedTrackApiDto } from "@src/models/api/detailed-track";
+import { ChartService } from "@src/modules/chart/service";
 
 export class GetTrackByIdHandler implements RouteHandler<GetTrackByIdRequestDto, DetailedTrackApiDto> {
 
@@ -16,17 +17,20 @@ export class GetTrackByIdHandler implements RouteHandler<GetTrackByIdRequestDto,
 
     private readonly apiHelper: ApiHelper;
     private readonly catalogueService: CatalogueService;
+    private readonly chartService: ChartService;
     private readonly musicProviderService: MusicProviderService;
     private readonly playedTrackService: PlayedTrackService;
     
     constructor(
         apiHelper: ApiHelper,
         catalogueService: CatalogueService,
+        chartService: ChartService,
         musicProviderService: MusicProviderService, 
         playedTrackService: PlayedTrackService,
     ) {
         this.apiHelper = requireNonNull(apiHelper);
         this.catalogueService = requireNonNull(catalogueService);
+        this.chartService = requireNonNull(chartService);
         this.musicProviderService = requireNonNull(musicProviderService);
         this.playedTrackService = requireNonNull(playedTrackService);
     }
@@ -40,11 +44,12 @@ export class GetTrackByIdHandler implements RouteHandler<GetTrackByIdRequestDto,
             throw new IllegalStateError(GetTrackByIdHandler.ERROR_TRACK_NOT_FOUND);
         }
 
-        const [externalUrls, playedInfo, album, artists] = await Promise.all([
+        const [externalUrls, playedInfo, album, artists, chartEntries] = await Promise.all([
             this.musicProviderService.getExternalUrlsForTrack(trackId),
             this.playedTrackService.getPlayedInfoForTrack(accountId, trackId),
             this.catalogueService.getAlbumById(track.albumId),
             this.catalogueService.getMultipleArtistsById(track.artistIds),
+            this.chartService.getEntriesForTrack(trackId),
         ]);
 
         const artistsApiDtos = artists.map(artist => {
@@ -79,6 +84,7 @@ export class GetTrackByIdHandler implements RouteHandler<GetTrackByIdRequestDto,
             discNumber: track.discNumber,
             trackNumber: track.trackNumber,
             durationMs: track.durationMs,
+            charts: this.apiHelper.convertTrackChartEntries(chartEntries),
         }
     }
 

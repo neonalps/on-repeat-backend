@@ -4,6 +4,7 @@ import { AccountJobScheduleApiDto } from "@src/models/api/account-job-schedule";
 import { AccountTokenApiDto } from "@src/models/api/account-token";
 import { AlbumApiDto } from "@src/models/api/album";
 import { ArtistApiDto } from "@src/models/api/artist";
+import { DetailedTrackChartApiDto } from "@src/models/api/detailed-track";
 import { ImageApiDto } from "@src/models/api/image";
 import { PlayedHistoryApiDto } from "@src/models/api/played-history";
 import { PlayedTrackApiDto } from "@src/models/api/played-track";
@@ -19,6 +20,7 @@ import { PlayedTrackDetailsDao } from "@src/models/classes/dao/played-track-deta
 import { PlayedTrackHistoryDao } from "@src/models/classes/dao/played-track-history";
 import { SimpleTrackDetailsDao } from "@src/models/classes/dao/simple-track-details";
 import { TrackDao } from "@src/models/classes/dao/track";
+import { TrackChartItemDao } from "@src/models/classes/dao/track-chart-item";
 import { isDefined, removeNull, requireNonNull } from "@src/util/common";
 
 interface PublicArtist {
@@ -206,6 +208,21 @@ export class ApiHelper {
             thumbnailUrl: item.thumbnailUrl,
             createdAt: item.createdAt,
         }
+    }
+
+    public convertTrackChartEntries(items: TrackChartItemDao[]): DetailedTrackChartApiDto[] {
+        return items.map(item => this.convertTrackChartItem(item));
+    };
+
+    public convertTrackChartItem(item: TrackChartItemDao): DetailedTrackChartApiDto {
+        return {
+            chart: {
+                id: item.chartId,
+                name: item.chartName,
+            },
+            place: item.place,
+            playCount: item.playCount,
+        };
     }
 
     private getResourceUrl(resourcePath: string, resourceId: string | number): string {

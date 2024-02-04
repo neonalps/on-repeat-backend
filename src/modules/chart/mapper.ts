@@ -1,8 +1,10 @@
 import sql from "@src/db/db";
 import { AccountChartDao } from "@src/models/classes/dao/account-chart";
 import { AccountChartItemDao } from "@src/models/classes/dao/account-chart-item";
+import { TrackChartItemDao } from "@src/models/classes/dao/track-chart-item";
 import { AccountChartItemDaoInterface } from "@src/models/dao/account-chart-item.dao";
 import { AccountChartDaoInterface } from "@src/models/dao/account-chart.dao";
+import { TrackChartItemDaoInterface } from "@src/models/dao/track-chart-item.dao";
 import { SortOrder } from "@src/modules/pagination/constants";
 import { removeNull } from "@src/util/common";
 
@@ -85,6 +87,31 @@ export class ChartMapper {
         return result
             .map(item => AccountChartItemDao.fromDaoInterface(item))
             .filter(removeNull) as AccountChartItemDao[];   
+    }
+
+    public async getEntriesForTrack(trackId: number): Promise<TrackChartItemDao[]> {
+        const result = await sql<TrackChartItemDaoInterface[]>`
+            select
+                c.id as chart_id,
+                c.name as chart_name,
+                tcd.place as place,
+                tcd.play_count as play_count
+            from
+                chart c left join
+                track_chart_details tcd on tcd.chart_id = c.id
+            where
+                tcd.track_id = ${ trackId }
+            order by
+                c.from DESC
+        `;
+    
+        if (!result || result.length === 0) {
+            return [];
+        }
+
+        return result
+            .map(item => TrackChartItemDao.fromDaoInterface(item))
+            .filter(removeNull) as TrackChartItemDao[];   
     }
 
     private determineSortOrder(order: SortOrder) {
