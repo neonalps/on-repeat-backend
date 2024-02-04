@@ -17,4 +17,14 @@ export interface DetailedTrackApiDto {
     trackNumber: number | null;
     durationMs: number | null;
     history?: PaginatedResponseDto<PlayedHistoryApiDto>;
+    charts?: DetailedTrackChartApiDto[];
+}
+
+export interface DetailedTrackChartApiDto {
+    chart: {
+        id: number;
+        name: string;
+    },
+    place: number;
+    playCount: number | null;
 }
