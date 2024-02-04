@@ -31,10 +31,10 @@ export class GetBasicDashboardInformationHandler implements RouteHandler<GetBasi
         const to = this.timeSource.getYesterdayEndOfDay();
 
         const [allTimeTrackCharts, allTimeArtistCharts, currentTrackCharts, currentArtistCharts, playedTrackStatsAllTime, playedTrackStatsCurrent] = await Promise.all([
-            this.chartService.getAccountTrackChartsForPeriod(accountId, null, to, GetBasicDashboardInformationHandler.DASHBOARD_CHARTS_LIMIT),
-            this.chartService.getAccountArtistChartsForPeriod(accountId, null, to, GetBasicDashboardInformationHandler.DASHBOARD_CHARTS_LIMIT),
-            this.chartService.getAccountTrackChartsForPeriod(accountId, from, to, GetBasicDashboardInformationHandler.DASHBOARD_CHARTS_LIMIT),
-            this.chartService.getAccountArtistChartsForPeriod(accountId, from, to, GetBasicDashboardInformationHandler.DASHBOARD_CHARTS_LIMIT),
+            this.chartService.getAdHocAccountTrackChartsForPeriod(accountId, null, to, GetBasicDashboardInformationHandler.DASHBOARD_CHARTS_LIMIT),
+            this.chartService.getAdHocAccountArtistChartsForPeriod(accountId, null, to, GetBasicDashboardInformationHandler.DASHBOARD_CHARTS_LIMIT),
+            this.chartService.getAdHocAccountTrackChartsForPeriod(accountId, from, to, GetBasicDashboardInformationHandler.DASHBOARD_CHARTS_LIMIT),
+            this.chartService.getAdHocAccountArtistChartsForPeriod(accountId, from, to, GetBasicDashboardInformationHandler.DASHBOARD_CHARTS_LIMIT),
             this.playedTrackService.getPlayedTrackStatsForPeriod(accountId, null, null),
             this.playedTrackService.getPlayedTrackStatsForPeriod(accountId, from, to),
         ]);

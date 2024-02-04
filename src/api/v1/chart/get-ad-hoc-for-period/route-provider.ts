@@ -2,10 +2,11 @@ import { requireNonNull } from "@src/util/common";
 import { RequestSchema, RouteDefinition, RouteProvider } from "@src/router/types";
 import { CreateChartsForPeriodRequestDto } from "@src/models/api/create-charts-for-period-request";
 import { ChartApiDto } from "@src/models/api/chart";
-import { ChartApiItem, GetChartForPeriodHandler } from "@src/api/v1/chart/get-for-period/handler";
+import { GetChartForPeriodHandler } from "@src/api/v1/chart/get-ad-hoc-for-period/handler";
 import { CHART_TYPES } from "@src/modules/chart/constants";
+import { AccountChartItemApiDto } from "@src/models/api/account-chart-item";
 
-export class GetChartForPeriodRouteProvider implements RouteProvider<CreateChartsForPeriodRequestDto, ChartApiDto<ChartApiItem>> {
+export class GetChartForPeriodRouteProvider implements RouteProvider<CreateChartsForPeriodRequestDto, ChartApiDto<AccountChartItemApiDto<unknown>>> {
 
     private readonly handler: GetChartForPeriodHandler;
 
@@ -13,7 +14,7 @@ export class GetChartForPeriodRouteProvider implements RouteProvider<CreateChart
         this.handler = requireNonNull(createChartForPeriodHandler);
     }
 
-    provide(): RouteDefinition<CreateChartsForPeriodRequestDto, ChartApiDto<ChartApiItem>> {
+    provide(): RouteDefinition<CreateChartsForPeriodRequestDto, ChartApiDto<AccountChartItemApiDto<unknown>>> {
         const schema: RequestSchema = {
             querystring: {
                 type: 'object',
@@ -34,9 +35,9 @@ export class GetChartForPeriodRouteProvider implements RouteProvider<CreateChart
         };
 
         return {
-            name: 'GetChartForPeriod',
+            name: 'GetAdHocChartForPeriod',
             method: 'GET',
-            path: '/api/v1/charts',
+            path: '/api/v1/charts/ad-hoc',
             schema,
             handler: this.handler,
             authenticated: true,

@@ -30,6 +30,9 @@ export class UpdatePlayedTrackByIdRouteProvider implements RouteProvider<UpdateP
             schema,
             handler: this.handler,
             authenticated: true,
+            response: {
+                statusCode: 200,
+            }
         };
     }
 

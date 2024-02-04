@@ -1,0 +1,94 @@
+import sql from "@src/db/db";
+import { AccountChartDao } from "@src/models/classes/dao/account-chart";
+import { AccountChartItemDao } from "@src/models/classes/dao/account-chart-item";
+import { AccountChartItemDaoInterface } from "@src/models/dao/account-chart-item.dao";
+import { AccountChartDaoInterface } from "@src/models/dao/account-chart.dao";
+import { SortOrder } from "@src/modules/pagination/constants";
+import { removeNull } from "@src/util/common";
+
+export class ChartMapper {
+
+    public async getAccountChartsPaginated(accountId: number, lastSeenFrom: Date, limit: number, order: SortOrder): Promise<AccountChartDao[]> {
+        const sqlSortOrder = this.determineSortOrder(order);
+
+        const result = await sql<AccountChartDaoInterface[]>`
+            select
+                c.id as id,
+                c.name as name,
+                c.type as type,
+                c.from as from,
+                c.to as to,
+                c.created_at as created_at
+            from
+                chart c
+            where
+                c.account_id = ${ accountId }
+                and c.from ${order === SortOrder.ASCENDING ? sql`>` : sql`<`} ${ lastSeenFrom }
+            order by
+                c.from ${ sqlSortOrder }
+            limit ${limit}
+        `;
+    
+        if (!result || result.length === 0) {
+            return [];
+        }
+
+        return result
+            .map(item => AccountChartDao.fromDaoInterface(item))
+            .filter(removeNull) as AccountChartDao[];   
+    }
+
+    public async getAccountChartById(chartId: number): Promise<AccountChartDao | null> {
+        const result = await sql<AccountChartDaoInterface[]>`
+            select
+                c.id as id,
+                c.name as name,
+                c.type as type,
+                c.from as from,
+                c.to as to,
+                c.created_at as created_at
+            from
+                chart c
+            where
+                c.id = ${ chartId }
+        `;
+    
+        if (!result || result.length === 0) {
+            return null;
+        }
+
+        const item = result[0];
+
+        return AccountChartDao.fromDaoInterface(item);
+    }
+
+    public async getAccountTrackChartDetails(chartId: number): Promise<AccountChartItemDao[]> {
+        const result = await sql<AccountChartItemDaoInterface[]>`
+            select
+                tcd.id as id,
+                tcd.chart_id as chart_id,
+                tcd.track_id as item_id,
+                tcd.place as place,
+                tcd.play_count as play_count
+            from
+                track_chart_details tcd
+            where
+                tcd.chart_id = ${ chartId }
+            order by
+                tcd.place ASC
+        `;
+    
+        if (!result || result.length === 0) {
+            return [];
+        }
+
+        return result
+            .map(item => AccountChartItemDao.fromDaoInterface(item))
+            .filter(removeNull) as AccountChartItemDao[];   
+    }
+
+    private determineSortOrder(order: SortOrder) {
+        return order === SortOrder.DESCENDING ? sql`desc` : sql`asc`;
+    }
+
+}

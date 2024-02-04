@@ -1,4 +1,5 @@
 import { ApiConfig } from "@src/api/config";
+import { AccountChartApiDto } from "@src/models/api/account-chart";
 import { AccountJobScheduleApiDto } from "@src/models/api/account-job-schedule";
 import { AccountTokenApiDto } from "@src/models/api/account-token";
 import { AlbumApiDto } from "@src/models/api/album";
@@ -7,6 +8,7 @@ import { ImageApiDto } from "@src/models/api/image";
 import { PlayedHistoryApiDto } from "@src/models/api/played-history";
 import { PlayedTrackApiDto } from "@src/models/api/played-track";
 import { TrackApiDto } from "@src/models/api/track";
+import { AccountChartDao } from "@src/models/classes/dao/account-chart";
 import { AccountJobScheduleDao } from "@src/models/classes/dao/account-job-schedule";
 import { AccountTokenDao } from "@src/models/classes/dao/account-token";
 import { AlbumDao } from "@src/models/classes/dao/album";
@@ -192,6 +194,18 @@ export class ApiHelper {
                 name: item.musicProvider.name,
             },
         };
+    }
+
+    public convertAccountChartApiDto(item: AccountChartDao): AccountChartApiDto {
+        return {
+            id: item.id,
+            name: item.name,
+            type: item.type,
+            to: item.to,
+            from: item.from,
+            thumbnailUrl: item.thumbnailUrl,
+            createdAt: item.createdAt,
+        }
     }
 
     private getResourceUrl(resourcePath: string, resourceId: string | number): string {

@@ -1,4 +1,4 @@
-import { ChartApiItem } from "@src/api/v1/chart/get-for-period/handler";
+import { AccountChartItemApiDto } from "@src/models/api/account-chart-item";
 import { ChartApiDto } from "@src/models/api/chart";
 import { PlayedStatsApiDto } from "@src/models/api/played-stats";
 import { PlayedStatsDao } from "@src/models/classes/dao/played-stats";
@@ -9,15 +9,15 @@ export class DashboardApiDtoConverter {
 
     constructor() {}
 
-    public static convertToAlbumChartApiDto(items: ChartApiItem[], from: Date | null, to: Date | null): ChartApiDto<ChartApiItem> {
+    public static convertToAlbumChartApiDto(items: AccountChartItemApiDto<unknown>[], from: Date | null, to: Date | null): ChartApiDto<AccountChartItemApiDto<unknown>> {
         return DashboardApiDtoConverter.convertToChartApiDto(CHART_TYPE_ALBUMS, items, DashboardApiDtoConverter.getNullableDate(from), DashboardApiDtoConverter.getNullableDate(to));
     }
 
-    public static convertToArtistChartApiDto(items: ChartApiItem[], from: Date | null, to: Date | null): ChartApiDto<ChartApiItem> {
+    public static convertToArtistChartApiDto(items: AccountChartItemApiDto<unknown>[], from: Date | null, to: Date | null): ChartApiDto<AccountChartItemApiDto<unknown>> {
         return DashboardApiDtoConverter.convertToChartApiDto(CHART_TYPE_ARTISTS, items, DashboardApiDtoConverter.getNullableDate(from), DashboardApiDtoConverter.getNullableDate(to));
     }
 
-    public static convertToTrackChartApiDto(items: ChartApiItem[], from: Date | null, to: Date | null): ChartApiDto<ChartApiItem> {
+    public static convertToTrackChartApiDto(items: AccountChartItemApiDto<unknown>[], from: Date | null, to: Date | null): ChartApiDto<AccountChartItemApiDto<unknown>> {
         return DashboardApiDtoConverter.convertToChartApiDto(CHART_TYPE_TRACKS, items, DashboardApiDtoConverter.getNullableDate(from), DashboardApiDtoConverter.getNullableDate(to));
     }
 
@@ -29,7 +29,7 @@ export class DashboardApiDtoConverter {
         };
     }
 
-    private static convertToChartApiDto(type: string, items: ChartApiItem[], from?: Date, to?: Date): ChartApiDto<ChartApiItem> {
+    private static convertToChartApiDto(type: string, items: AccountChartItemApiDto<unknown>[], from?: Date, to?: Date): ChartApiDto<AccountChartItemApiDto<unknown>> {
         return {
             type,
             from,
