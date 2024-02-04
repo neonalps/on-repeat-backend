@@ -1,6 +1,5 @@
+import { AccountChartItemApiDto } from "@src/models/api/account-chart-item";
 import { ChartApiDto } from "@src/models/api/chart";
-import { ChartArtistApiDto } from "@src/models/api/chart-artist";
-import { ChartTrackApiDto } from "@src/models/api/chart-track";
 import { CreateChartsForPeriodRequestDto } from "@src/models/api/create-charts-for-period-request";
 import { AccountDao } from "@src/models/classes/dao/account";
 import { CHART_TYPE_ARTISTS, CHART_TYPE_TRACKS } from "@src/modules/chart/constants";
@@ -9,9 +8,7 @@ import { AuthenticationContext, RouteHandler } from "@src/router/types";
 import { isDefined, requireNonNull } from "@src/util/common";
 import { DateUtils } from "@src/util/date";
 
-export type ChartApiItem = ChartTrackApiDto | ChartArtistApiDto;
-
-export class GetChartForPeriodHandler implements RouteHandler<CreateChartsForPeriodRequestDto, ChartApiDto<ChartApiItem>> {
+export class GetChartForPeriodHandler implements RouteHandler<CreateChartsForPeriodRequestDto, ChartApiDto<AccountChartItemApiDto<unknown>>> {
 
     private readonly chartService: ChartService;
 
@@ -19,7 +16,7 @@ export class GetChartForPeriodHandler implements RouteHandler<CreateChartsForPer
         this.chartService = requireNonNull(chartService);
     }
 
-    public async handle(context: AuthenticationContext, dto: CreateChartsForPeriodRequestDto): Promise<ChartApiDto<ChartApiItem>> {
+    public async handle(context: AuthenticationContext, dto: CreateChartsForPeriodRequestDto): Promise<ChartApiDto<AccountChartItemApiDto<unknown>>> {
         const accountId = (context.account as AccountDao).id;
         
         const type = isDefined(dto.type) ? dto.type : CHART_TYPE_TRACKS;
@@ -28,7 +25,7 @@ export class GetChartForPeriodHandler implements RouteHandler<CreateChartsForPer
 
         const items = await this.getChartItems(type, accountId, from, to);
 
-        let response: ChartApiDto<ChartApiItem>;
+        let response: ChartApiDto<AccountChartItemApiDto<unknown>>;
         response = {
             type,
             items,
@@ -45,12 +42,12 @@ export class GetChartForPeriodHandler implements RouteHandler<CreateChartsForPer
         return response;
     }
 
-    private getChartItems(type: string, accountId: number, from: Date | null, to: Date | null): Promise<ChartApiItem[]> {
+    private getChartItems(type: string, accountId: number, from: Date | null, to: Date | null): Promise<AccountChartItemApiDto<unknown>[]> {
         switch (type) {
             case CHART_TYPE_ARTISTS:
-                return this.chartService.getAccountArtistChartsForPeriod(accountId, from, to);
+                return this.chartService.getAdHocAccountArtistChartsForPeriod(accountId, from, to);
             case CHART_TYPE_TRACKS:
-                return this.chartService.getAccountTrackChartsForPeriod(accountId, from, to);
+                return this.chartService.getAdHocAccountTrackChartsForPeriod(accountId, from, to);
             default:
                 throw new Error(`Illegal state: unknown chart type ${type}`);
         }

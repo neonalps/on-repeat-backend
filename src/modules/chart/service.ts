@@ -1,14 +1,20 @@
 import { PlayedTrackService } from "@src/modules/played-tracks/service";
-import { removeNull, requireNonNull } from "@src/util/common";
+import { isNotDefined, removeNull, requireNonNull } from "@src/util/common";
 import { validateNotNull, validateTrue } from "@src/util/validation";
 import { CatalogueService } from "@src/modules/catalogue/service";
 import { TrackDao } from "@src/models/classes/dao/track";
-import { ChartTrackApiDto } from "@src/models/api/chart-track";
 import logger from "@src/log/logger";
 import { ApiHelper } from "@src/api/helper";
-import { ChartArtistApiDto } from "@src/models/api/chart-artist";
 import { ArtistApiDto } from "@src/models/api/artist";
 import { ChartItem } from "@src/models/interface/chart-item";
+import { PaginationParams } from "@src/modules/pagination/constants";
+import { AccountChartDao } from "@src/models/classes/dao/account-chart";
+import { ChartMapper } from "@src/modules/chart/mapper";
+import { AccountChartDetailsDao } from "@src/models/classes/dao/account-chart-details";
+import { AccountChartItemApiDto } from "@src/models/api/account-chart-item";
+import { TrackApiDto } from "@src/models/api/track";
+
+export interface GetAccountChartsPaginationParams extends PaginationParams<Date> {};
 
 export class ChartService {
 
@@ -18,15 +24,22 @@ export class ChartService {
 
     private readonly apiHelper: ApiHelper;
     private readonly catalogueService: CatalogueService;
+    private readonly mapper: ChartMapper;
     private readonly playedTrackService: PlayedTrackService;
 
-    constructor(apiHelper: ApiHelper, catalogueService: CatalogueService, playedTrackService: PlayedTrackService) {
+    constructor(
+        apiHelper: ApiHelper, 
+        catalogueService: CatalogueService, 
+        mapper: ChartMapper,
+        playedTrackService: PlayedTrackService
+    ) {
         this.apiHelper = requireNonNull(apiHelper);
         this.catalogueService = requireNonNull(catalogueService);
+        this.mapper = requireNonNull(mapper);
         this.playedTrackService = requireNonNull(playedTrackService);
     }
 
-    public async getAccountTrackChartsForPeriod(accountId: number, from: Date | null, to: Date | null, limit: number = ChartService.CHART_DEFAULT_LIMIT): Promise<ChartTrackApiDto[]> {
+    public async getAdHocAccountTrackChartsForPeriod(accountId: number, from: Date | null, to: Date | null, limit: number = ChartService.CHART_DEFAULT_LIMIT): Promise<AccountChartItemApiDto<TrackApiDto>[]> {
         validateNotNull(accountId, "accountId");
         validateTrue(limit <= ChartService.ACCOUNT_TRACK_CHART_MAX_LIMIT, `limit must not be larger than ${ChartService.ACCOUNT_TRACK_CHART_MAX_LIMIT}`);
 
@@ -48,34 +61,27 @@ export class ChartService {
             this.catalogueService.getMultipleAlbumsById(albumIds),
         ]);
 
-        const chartTracks: ChartTrackApiDto[] = [];
-
-        for (const chartItem of chartItems) {
+        return chartItems.map(chartItem => {
             const bucketId = chartItem.itemId;
-            const timesPlayed = chartItem.timesPlayed;
-
             const track = trackDaos.find(track => track.id === bucketId);
 
             if (!track) {
                 logger.error(`Illegal state; track with bucket ID ${bucketId} was found in charts but not in DAOs`);
-                continue;
+                return null;
             }
 
             const album = albumDaos.find(album => album.id === track.albumId);
             const artists = artistDaos.filter(artist => track.artistIds.indexOf(artist.id) >= 0);
 
-            chartTracks.push({
-                position: chartItem.rank,
-                delta: null,
-                track: this.apiHelper.convertTrackApiDto(track, artists, album),
-                timesPlayed,
-            });
-        }
-        
-        return chartTracks;
+            return {
+                place: chartItem.rank,
+                item: this.apiHelper.convertTrackApiDto(track, artists, album),
+                playCount: chartItem.timesPlayed,
+            }
+        }).filter(removeNull) as AccountChartItemApiDto<TrackApiDto>[];
     }
 
-    public async getAccountArtistChartsForPeriod(accountId: number, from: Date | null, to: Date | null, limit: number = ChartService.CHART_DEFAULT_LIMIT): Promise<ChartArtistApiDto[]> {
+    public async getAdHocAccountArtistChartsForPeriod(accountId: number, from: Date | null, to: Date | null, limit: number = ChartService.CHART_DEFAULT_LIMIT): Promise<AccountChartItemApiDto<ArtistApiDto>[]> {
         validateNotNull(accountId, "accountId");
         validateTrue(limit <= ChartService.ACCOUNT_ARTIST_CHART_MAX_LIMIT, `limit must not be larger than ${ChartService.ACCOUNT_ARTIST_CHART_MAX_LIMIT}`);
 
@@ -89,28 +95,47 @@ export class ChartService {
 
         const artistDaos = await this.catalogueService.getMultipleArtistsById(artistIds);
 
-        const chartArtists: ChartArtistApiDto[] = [];
-
-        for (const chartItem of chartItems) {
+        return chartItems.map(chartItem => {
             const artistId = chartItem.itemId;
-            const timesPlayed = chartItem.timesPlayed;
-
             const artist = artistDaos.find(artist => artist.id === artistId);
 
             if (!artist) {
                 logger.error(`Illegal state; artist with ID ${artistId} was found in charts but not in DAOs`);
-                continue;
+                return null;
             }
 
-            chartArtists.push({
-                position: chartItem.rank,
-                delta: null,
-                artist: this.apiHelper.convertArtistApiDto(artist) as ArtistApiDto,
-                timesPlayed,
-            });
+            return {
+                place: chartItem.rank,
+                item: this.apiHelper.convertArtistApiDto(artist) as ArtistApiDto,
+                playCount: chartItem.timesPlayed,
+            }
+        }).filter(removeNull) as AccountChartItemApiDto<ArtistApiDto>[];
+    }
+
+    public async getAccountChartsPaginated(accountId: number, paginationParams: GetAccountChartsPaginationParams): Promise<AccountChartDao[]> {
+        validateNotNull(accountId, "accountId");
+        validateNotNull(paginationParams, "paginationParams");
+        validateNotNull(paginationParams.limit, "paginationParams.limit");
+        validateNotNull(paginationParams.order, "paginationParams.order");
+        validateNotNull(paginationParams.lastSeen, "paginationParams.lastSeen");
+
+        return this.mapper.getAccountChartsPaginated(accountId, paginationParams.lastSeen, paginationParams.limit, paginationParams.order);
+    }
+
+    public async getAccountChartDetails(chartId: number): Promise<AccountChartDetailsDao | null> {
+        validateNotNull(chartId, "chartId");
+
+        const accountChart = await this.mapper.getAccountChartById(chartId);
+        if (isNotDefined(accountChart)) {
+            return null;
         }
-        
-        return chartArtists;
+
+        const details = await this.mapper.getAccountTrackChartDetails(chartId);
+
+        return AccountChartDetailsDao.Builder
+            .withChart(accountChart as AccountChartDao)
+            .withItems(details)
+            .build();
     }
 
 }
