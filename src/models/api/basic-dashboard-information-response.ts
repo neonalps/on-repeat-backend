@@ -1,16 +1,16 @@
-import { ChartApiItem } from "@src/api/v1/chart/get-for-period/handler"
 import { ChartApiDto } from "@src/models/api/chart"
-import { PlayedStatsApiDto } from "./played-stats"
+import { PlayedStatsApiDto } from "@src/models/api/played-stats"
+import { AccountChartItemApiDto } from "./account-chart-item"
 
 export interface BasicDashboardInformationApiDto {
     charts: {
         tracks: {
-            allTime: ChartApiDto<ChartApiItem>,
-            current: ChartApiDto<ChartApiItem>,
+            allTime: ChartApiDto<AccountChartItemApiDto<unknown>>,
+            current: ChartApiDto<AccountChartItemApiDto<unknown>>,
         },
         artists: {
-            allTime: ChartApiDto<ChartApiItem>,
-            current: ChartApiDto<ChartApiItem>,
+            allTime: ChartApiDto<AccountChartItemApiDto<unknown>>,
+            current: ChartApiDto<AccountChartItemApiDto<unknown>>,
         },
     },
     stats: {

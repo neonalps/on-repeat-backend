@@ -35,6 +35,7 @@ import { ApiHelper } from "@src/api/helper";
 import { ChartService } from "@src/modules/chart/service";
 import { SearchService } from "@src/modules/search/search";
 import { AuthHelper } from "@src/modules/auth/helper";
+import { ChartMapper } from "@src/modules/chart/mapper";
 
 export class DependencyHelper {
 
@@ -86,7 +87,8 @@ export class DependencyHelper {
         const playedTrackMapper = new PlayedTrackMapper();
         const playedTrackService = new PlayedTrackService(catalogueService, playedTrackMapper);
 
-        const chartService = new ChartService(apiHelper, catalogueService, playedTrackService);
+        const chartMapper = new ChartMapper();
+        const chartService = new ChartService(apiHelper, catalogueService, chartMapper, playedTrackService);
 
         const spotifyClient = new SpotifyClient(getSpotifyClientConfig());
 
