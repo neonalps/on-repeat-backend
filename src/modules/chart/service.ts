@@ -13,6 +13,7 @@ import { ChartMapper } from "@src/modules/chart/mapper";
 import { AccountChartDetailsDao } from "@src/models/classes/dao/account-chart-details";
 import { AccountChartItemApiDto } from "@src/models/api/account-chart-item";
 import { TrackApiDto } from "@src/models/api/track";
+import { TrackChartItemDao } from "@src/models/classes/dao/track-chart-item";
 
 export interface GetAccountChartsPaginationParams extends PaginationParams<Date> {};
 
@@ -136,6 +137,12 @@ export class ChartService {
             .withChart(accountChart as AccountChartDao)
             .withItems(details)
             .build();
+    }
+
+    public async getEntriesForTrack(trackId: number): Promise<TrackChartItemDao[]> {
+        validateNotNull(trackId, "trackId");
+
+        return this.mapper.getEntriesForTrack(trackId);
     }
 
 }
