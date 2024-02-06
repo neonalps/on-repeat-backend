@@ -6,14 +6,16 @@ import { PlayedTrackService } from "@src/modules/played-tracks/service";
 import { MusicProviderService } from "@src/modules/music-provider/service";
 import { CatalogueService } from "@src/modules/catalogue/service";
 import { ApiHelper } from "@src/api/helper";
+import { ChartService } from "@src/modules/chart/service";
 
 export const getArtistApiRouteProviders = () => {
     const apiHelper = dependencyManager.get<ApiHelper>(Dependencies.ApiHelper);
     const catalogueService = dependencyManager.get<CatalogueService>(Dependencies.CatalogueService);
+    const chartService = dependencyManager.get<ChartService>(Dependencies.ChartService);
     const musicProviderService = dependencyManager.get<MusicProviderService>(Dependencies.MusicProviderService);
     const playedTrackService = dependencyManager.get<PlayedTrackService>(Dependencies.PlayedTrackService);
 
-    const getArtistByIdHandler = new GetArtistByIdHandler(apiHelper, catalogueService, musicProviderService, playedTrackService);
+    const getArtistByIdHandler = new GetArtistByIdHandler(apiHelper, catalogueService, chartService, musicProviderService, playedTrackService);
 
     return [
         new GetArtistByIdRouteProvider(getArtistByIdHandler),
