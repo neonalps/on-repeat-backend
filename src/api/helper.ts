@@ -4,6 +4,7 @@ import { AccountJobScheduleApiDto } from "@src/models/api/account-job-schedule";
 import { AccountTokenApiDto } from "@src/models/api/account-token";
 import { AlbumApiDto } from "@src/models/api/album";
 import { ArtistApiDto } from "@src/models/api/artist";
+import { DetailedArtistChartApiDto } from "@src/models/api/detailed-artist";
 import { DetailedTrackChartApiDto } from "@src/models/api/detailed-track";
 import { ImageApiDto } from "@src/models/api/image";
 import { PlayedHistoryApiDto } from "@src/models/api/played-history";
@@ -15,6 +16,7 @@ import { AccountTokenDao } from "@src/models/classes/dao/account-token";
 import { AlbumDao } from "@src/models/classes/dao/album";
 import { SimpleAlbumDao } from "@src/models/classes/dao/album-simple";
 import { ArtistDao } from "@src/models/classes/dao/artist";
+import { ArtistTrackChartItemDao } from "@src/models/classes/dao/artist-track-chart-item";
 import { ImageDao } from "@src/models/classes/dao/image";
 import { PlayedTrackDetailsDao } from "@src/models/classes/dao/played-track-details";
 import { PlayedTrackHistoryDao } from "@src/models/classes/dao/played-track-history";
@@ -222,6 +224,18 @@ export class ApiHelper {
             },
             place: item.place,
             playCount: item.playCount,
+        };
+    }
+
+    public convertArtistTrackChartItem(item: ArtistTrackChartItemDao, track: TrackDao, artists: ArtistDao[], album?: AlbumDao): DetailedArtistChartApiDto {
+        return {
+            chart: {
+                id: item.chartId,
+                name: item.chartName,
+            },
+            place: item.place,
+            playCount: item.playCount,
+            track: this.convertTrackApiDto(track, artists, album),
         };
     }
 
