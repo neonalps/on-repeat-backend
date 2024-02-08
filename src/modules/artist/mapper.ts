@@ -110,7 +110,7 @@ export class ArtistMapper {
         const result = await sql<ArtistDaoInterface[]>`
             ${ ArtistMapper.commonArtistSelect() }
             where
-                name like ${ '%' + input + '%' }
+                name ilike ${ '%' + input + '%' }
             limit
                 10
         `;

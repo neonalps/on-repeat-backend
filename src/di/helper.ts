@@ -82,13 +82,13 @@ export class DependencyHelper {
 
         const catalogueService = new CatalogueService(trackService, artistService, albumService);
 
-        const searchService = new SearchService(apiHelper, catalogueService);
-
         const playedTrackMapper = new PlayedTrackMapper();
         const playedTrackService = new PlayedTrackService(catalogueService, playedTrackMapper);
 
         const chartMapper = new ChartMapper();
         const chartService = new ChartService(apiHelper, catalogueService, chartMapper, playedTrackService);
+
+        const searchService = new SearchService(apiHelper, catalogueService, chartService);
 
         const spotifyClient = new SpotifyClient(getSpotifyClientConfig());
 

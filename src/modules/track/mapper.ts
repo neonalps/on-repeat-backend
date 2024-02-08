@@ -2,6 +2,7 @@ import sql from "@src/db/db";
 import { TrackDao } from "@src/models/classes/dao/track";
 import { CreateTrackDto } from "@src/models/classes/dto/create-track";
 import { UpdateTrackDto } from "@src/models/classes/dto/update-track";
+import { MagicSearchInterface } from "@src/models/dao/magic-search";
 import { TrackArtistDaoInterface } from "@src/models/dao/track-artist.dao";
 import { TrackDaoInterface } from "@src/models/dao/track.dao";
 import postgres, { PendingQuery, Row } from "postgres";
@@ -152,7 +153,7 @@ export class TrackMapper {
         const result = await sql<TrackDaoInterface[]>`
             ${ TrackMapper.commonTrackSelect() }
             where
-                name like ${ '%' + input + '%' }
+                name ilike ${ '%' + input + '%' }
             limit
                 10
         `;
@@ -162,6 +163,22 @@ export class TrackMapper {
         }
 
         return this.convertResultSet(result);
+    }
+
+    public async magicSearch(input: string): Promise<TrackDao[]> {
+        const searchParts = input.split(" ")
+            .map(item => item.trim())
+            .filter(item => item.length > 0);
+
+        const queryParts = searchParts.map(term => sql`( select t.id from track t inner join track_artists ta on t.id = ta.track_id inner join artist a on a.id=ta.artist_id where t.name ilike ${ '%' + term + '%'} or a.name ilike ${ '%' + term + '%'} )`);
+        const result = await sql<MagicSearchInterface[]>`select id as track_id, count(id) as match_count from ( ${sql(queryParts.join(` union all `))} sub group by id having count(id) >= ${searchParts.length} )`;
+
+        if (!result || result.length === 0) {
+            return [];
+        }
+
+        const ids = new Set(result.map(item => item.trackId));
+        return this.getMultipleById(Array.from(ids));
     }
 
     private static convertToDao(item: TrackDaoInterface, artistIds: number[]): TrackDao {

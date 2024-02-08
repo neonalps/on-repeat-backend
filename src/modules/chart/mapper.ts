@@ -143,6 +143,32 @@ export class ChartMapper {
             .filter(removeNull) as ArtistTrackChartItemDao[];   
     }
 
+    public async fullTextSearch(input: string): Promise<AccountChartDao[]> {
+        const result = await sql<AccountChartDaoInterface[]>`
+            select
+                c.id as id,
+                c.name as name,
+                c.type as type,
+                c.from as from,
+                c.to as to,
+                c.created_at as created_at
+            from
+                chart c
+            where
+                name ilike ${ '%' + input + '%' }
+            limit
+                10
+        `;
+
+        if (!result || result.length === 0) {
+            return [];
+        }
+
+        return result
+            .map(item => AccountChartDao.fromDaoInterface(item))
+            .filter(removeNull) as AccountChartDao[];   
+    }
+
     private determineSortOrder(order: SortOrder) {
         return order === SortOrder.DESCENDING ? sql`desc` : sql`asc`;
     }
