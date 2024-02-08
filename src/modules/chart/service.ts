@@ -1,6 +1,6 @@
 import { PlayedTrackService } from "@src/modules/played-tracks/service";
 import { isNotDefined, removeNull, requireNonNull } from "@src/util/common";
-import { validateNotNull, validateTrue } from "@src/util/validation";
+import { validateNotBlank, validateNotNull, validateTrue } from "@src/util/validation";
 import { CatalogueService } from "@src/modules/catalogue/service";
 import { TrackDao } from "@src/models/classes/dao/track";
 import logger from "@src/log/logger";
@@ -150,6 +150,12 @@ export class ChartService {
         validateNotNull(artistId, "artistId");
 
         return this.mapper.getTrackEntriesForArtist(artistId);
+    }
+
+    public async fullTextSearch(input: string): Promise<AccountChartDao[]> {
+        validateNotBlank(input, "input");
+
+        return this.mapper.fullTextSearch(input);
     }
 
 }
