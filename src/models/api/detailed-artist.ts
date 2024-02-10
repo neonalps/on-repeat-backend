@@ -1,6 +1,6 @@
 import { PlayedInfoApiDto } from "@src/models/api/played-info";
 import { ImageApiDto } from "@src/models/api/image";
-import { TrackApiDto } from "./track";
+import { TrackApiDto } from "@src/models/api/track";
 
 export interface DetailedArtistApiDto {
     id: number;
