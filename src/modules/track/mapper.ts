@@ -2,11 +2,10 @@ import sql from "@src/db/db";
 import { TrackDao } from "@src/models/classes/dao/track";
 import { CreateTrackDto } from "@src/models/classes/dto/create-track";
 import { UpdateTrackDto } from "@src/models/classes/dto/update-track";
-import { MagicSearchInterface } from "@src/models/dao/magic-search";
+import { IdInterface } from "@src/models/dao/id.dao";
 import { TrackArtistDaoInterface } from "@src/models/dao/track-artist.dao";
-import { TrackBucketPlayedInfoDaoInterface } from "@src/models/dao/track-bucket-played-info";
 import { TrackDaoInterface } from "@src/models/dao/track.dao";
-import { PlayedInfoItem } from "@src/models/interface/played-info-item";
+import { isDefined } from "@src/util/common";
 import postgres, { PendingQuery, Row } from "postgres";
 
 export class TrackMapper {
@@ -168,19 +167,53 @@ export class TrackMapper {
     }
 
     public async magicSearch(input: string): Promise<TrackDao[]> {
-        const searchParts = input.split(" ")
+        const searchTerms = input.split(" ")
             .map(item => item.trim())
             .filter(item => item.length > 0);
 
-        const queryParts = searchParts.map(term => sql`( select t.id from track t inner join track_artists ta on t.id = ta.track_id inner join artist a on a.id=ta.artist_id where t.name ilike ${ '%' + term + '%'} or a.name ilike ${ '%' + term + '%'} )`);
-        const result = await sql<MagicSearchInterface[]>`select id as track_id, count(id) as match_count from ( ${sql(queryParts.join(` union all `))} sub group by id having count(id) >= ${searchParts.length} )`;
+        const resultMap = new Map<number, number>();
+        for (const term of searchTerms) {
+            const results = await this.magicSearchPart(term);
+            results.forEach(item => {
+                const stored = resultMap.get(item);
+                if (isDefined(stored)) {
+                    resultMap.set(item, (stored as number) + 1);
+                } else {
+                    resultMap.set(item, 1);
+                }
+            });
+        }
+
+        const matchedIds = new Set<number>();
+        for (const [key, value] of resultMap) {
+            if (value >= searchTerms.length) {
+                matchedIds.add(key);
+            }
+        }
+
+        return this.getMultipleById(Array.from(matchedIds));
+    }
+
+    private async magicSearchPart(term: string): Promise<number[]> {
+        const result = await sql<IdInterface[]>`
+            select
+                t.bucket as id
+            from
+                track t inner join
+                track_artists ta on t.id = ta.track_id inner join 
+                artist a on a.id = ta.artist_id 
+            where 
+                t.name ilike ${ '%' + term + '%' } or 
+                a.name ilike ${ '%' + term + '%' }
+            group by
+                t.bucket
+        `;
 
         if (!result || result.length === 0) {
             return [];
         }
 
-        const ids = new Set(result.map(item => item.trackId));
-        return this.getMultipleById(Array.from(ids));
+        return result.map(item => item.id);
     }
 
     private static convertToDao(item: TrackDaoInterface, artistIds: number[]): TrackDao {

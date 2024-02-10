@@ -59,7 +59,7 @@ export class TrackService {
     public async fullTextSearch(input: string): Promise<TrackDao[]> {
         validateNotBlank(input, "input");
 
-        return this.mapper.fullTextSearch(input);
+        return this.mapper.magicSearch(input);
     }
 
 }
