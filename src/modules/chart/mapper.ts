@@ -116,7 +116,7 @@ export class ChartMapper {
             .filter(removeNull) as TrackChartItemDao[];   
     }
 
-    public async getTrackEntriesForArtist(artistId: number): Promise<ArtistTrackChartItemDao[]> {
+    public async getTrackEntriesForArtist(accountId: number, artistId: number): Promise<ArtistTrackChartItemDao[]> {
         const result = await sql<ArtistTrackChartItemDaoInterface[]>`
             select
                 c.id as chart_id,
@@ -129,6 +129,7 @@ export class ChartMapper {
                 track_chart_details tcd on tcd.chart_id = c.id left join
                 track_artists ta on tcd.track_id = ta.track_id
             where
+                c.account_id = ${ accountId } and
                 ta.artist_id = ${ artistId }
             order by
                 c.from ASC

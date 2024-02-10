@@ -46,7 +46,7 @@ export class GetArtistByIdHandler implements RouteHandler<GetArtistByIdRequestDt
         const [externalUrls, playedInfo, chartEntries] = await Promise.all([
             this.musicProviderService.getExternalUrlsForArtist(artistId),
             this.playedTrackService.getPlayedInfoForArtist(accountId, artistId),
-            this.chartService.getTrackEntriesForArtist(artistId),
+            this.chartService.getTrackEntriesForArtist(accountId, artistId),
         ]);
 
         const tracks = await this.catalogueService.getMultipleTracksById(new Set(chartEntries.map(entry => entry.trackId)));

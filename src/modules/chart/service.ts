@@ -146,10 +146,11 @@ export class ChartService {
         return this.mapper.getEntriesForTrack(trackId);
     }
 
-    public async getTrackEntriesForArtist(artistId: number): Promise<ArtistTrackChartItemDao[]> {
+    public async getTrackEntriesForArtist(accountId: number, artistId: number): Promise<ArtistTrackChartItemDao[]> {
+        validateNotNull(accountId, "accountId");
         validateNotNull(artistId, "artistId");
 
-        return this.mapper.getTrackEntriesForArtist(artistId);
+        return this.mapper.getTrackEntriesForArtist(accountId, artistId);
     }
 
     public async fullTextSearch(input: string): Promise<AccountChartDao[]> {

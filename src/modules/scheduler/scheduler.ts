@@ -71,6 +71,7 @@ export class Scheduler {
             await JobRepository.getJob(context.job.id).process(context);
             await this.jobHelper.markSucceeded(context.accountJob, context.accountJobSchedule);
         } catch (ex) {
+            logger.error(ex);
             await this.jobHelper.markFailed(context.accountJob, context.accountJobSchedule, (ex as any)?.message);
         }
     }

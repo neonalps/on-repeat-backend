@@ -4,7 +4,9 @@ import { CreateTrackDto } from "@src/models/classes/dto/create-track";
 import { UpdateTrackDto } from "@src/models/classes/dto/update-track";
 import { MagicSearchInterface } from "@src/models/dao/magic-search";
 import { TrackArtistDaoInterface } from "@src/models/dao/track-artist.dao";
+import { TrackBucketPlayedInfoDaoInterface } from "@src/models/dao/track-bucket-played-info";
 import { TrackDaoInterface } from "@src/models/dao/track.dao";
+import { PlayedInfoItem } from "@src/models/interface/played-info-item";
 import postgres, { PendingQuery, Row } from "postgres";
 
 export class TrackMapper {
