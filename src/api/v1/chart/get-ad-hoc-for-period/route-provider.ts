@@ -26,6 +26,9 @@ export class GetChartForPeriodRouteProvider implements RouteProvider<CreateChart
                     to: { 
                         type: 'number', 
                     },
+                    limit: {
+                        type: 'number',
+                    },
                     type: { 
                         type: 'string', 
                         enum: CHART_TYPES,
