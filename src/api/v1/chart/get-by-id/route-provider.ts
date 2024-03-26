@@ -13,7 +13,15 @@ export class GetAccountChartDetailsRouteProvider implements RouteProvider<GetAcc
     }
 
     provide(): RouteDefinition<GetAccountChartDetailsRequestDto, AccountChartDetailsApiDto<unknown>> {
-        const schema: RequestSchema = {};
+        const schema: RequestSchema = {
+            params: {
+                type: 'object',
+                required: ['chartId'],
+                properties: {
+                    chartId: { type: 'string' },
+                },
+            }
+        };
 
         return {
             name: 'GetAccountChartDetails',

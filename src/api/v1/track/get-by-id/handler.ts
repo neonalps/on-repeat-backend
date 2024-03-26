@@ -44,12 +44,13 @@ export class GetTrackByIdHandler implements RouteHandler<GetTrackByIdRequestDto,
             throw new IllegalStateError(GetTrackByIdHandler.ERROR_TRACK_NOT_FOUND);
         }
 
-        const [externalUrls, playedInfo, album, artists, chartEntries] = await Promise.all([
+        const [externalUrls, playedInfo, album, artists, chartEntries, releaseDate] = await Promise.all([
             this.musicProviderService.getExternalUrlsForTrack(trackId),
             this.playedTrackService.getPlayedInfoForTrack(accountId, trackId),
             this.catalogueService.getAlbumById(track.albumId),
             this.catalogueService.getMultipleArtistsById(track.artistIds),
             this.chartService.getEntriesForTrack(trackId),
+            this.catalogueService.getTrackReleaseDate(trackId),
         ]);
 
         const artistsApiDtos = artists.map(artist => {
@@ -66,6 +67,11 @@ export class GetTrackByIdHandler implements RouteHandler<GetTrackByIdRequestDto,
             name: album.name,
             href: this.apiHelper.getAlbumResourceUrl(album.id),
             images: this.apiHelper.convertImageApiDtos(Array.from(album.images)),
+        } : null;
+
+        const releaseDateApiDto = releaseDate !== null ? {
+            releaseDate: releaseDate.releaseDate,
+            precision: releaseDate.precision,
         } : null;
 
         return {
@@ -85,6 +91,7 @@ export class GetTrackByIdHandler implements RouteHandler<GetTrackByIdRequestDto,
             trackNumber: track.trackNumber,
             durationMs: track.durationMs,
             charts: this.apiHelper.convertTrackChartEntries(chartEntries),
+            releaseDate: releaseDateApiDto,
         }
     }
 

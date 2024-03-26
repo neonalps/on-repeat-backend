@@ -100,6 +100,38 @@ export class TrackMapper {
         return this.convertResultSet(result);
     }
 
+    public async getAllBucketItemsForTrackId(trackId: number): Promise<TrackDao[]> {
+        const track = await this.getById(trackId);
+        if (!track) {
+            return [];
+        }
+
+        const result = await sql<TrackDaoInterface[]>`
+            select
+                id,
+                name,
+                album_id,
+                isrc,
+                bucket,
+                disc_number,
+                track_number,
+                duration_ms,
+                explicit,
+                created_at,
+                updated_at
+            from
+                track
+            where
+                bucket = ${ track.bucket }
+        `;
+    
+        if (!result || result.length === 0) {
+            return [];
+        }
+
+        return this.convertResultSet(result);
+    }
+
     public async getByIsrc(isrc: string): Promise<TrackDao[]> {
         const result = await sql<TrackDaoInterface[]>`
             select
@@ -139,7 +171,7 @@ export class TrackMapper {
                 updated_at = now()
             where id = ${ id }
             `;
-    };
+    }
 
     public async updateBucket(id: number, newBucket: number): Promise<void> {
         await sql`

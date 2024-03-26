@@ -36,8 +36,8 @@ export class SearchService {
         ]);
 
         return [
-            ...tracks.map(track => this.convertTrackItem(track)),
             ...artists.map(artist => this.convertArtistItem(artist)),
+            ...tracks.map(track => this.convertTrackItem(track)),
             ...charts.map(chart => this.convertChartItem(chart)),
         ];
     }
