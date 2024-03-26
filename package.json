@@ -42,7 +42,7 @@
     "node-pg-migrate": "^6.2.2",
     "pino": "^8.8.0",
     "postgres": "^3.3.3",
-    "undici": "^5.16.0",
+    "undici": "5.28.3",
     "uuid": "^9.0.0"
   }
 }
