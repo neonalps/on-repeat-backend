@@ -22,8 +22,13 @@ export class GetChartForPeriodHandler implements RouteHandler<CreateChartsForPer
         const type = isDefined(dto.type) ? dto.type : CHART_TYPE_TRACKS;
         const from = isDefined(dto.from) ? DateUtils.getDateFromUnixTimestamp(dto.from) : null;
         const to = isDefined(dto.to) ? DateUtils.getDateFromUnixTimestamp(dto.to) : null;
+        const limit = isDefined(dto.limit) ? dto.limit : 10;
 
-        const items = await this.getChartItems(type, accountId, from, to);
+        if (limit < 1 || limit > 100) {
+            throw new Error(`Limit must be between 1 and 100`);
+        }
+
+        const items = await this.getChartItems(type, accountId, from, to, limit);
 
         let response: ChartApiDto<AccountChartItemApiDto<unknown>>;
         response = {
@@ -42,12 +47,12 @@ export class GetChartForPeriodHandler implements RouteHandler<CreateChartsForPer
         return response;
     }
 
-    private getChartItems(type: string, accountId: number, from: Date | null, to: Date | null): Promise<AccountChartItemApiDto<unknown>[]> {
+    private getChartItems(type: string, accountId: number, from: Date | null, to: Date | null, limit: number): Promise<AccountChartItemApiDto<unknown>[]> {
         switch (type) {
             case CHART_TYPE_ARTISTS:
-                return this.chartService.getAdHocAccountArtistChartsForPeriod(accountId, from, to);
+                return this.chartService.getAdHocAccountArtistChartsForPeriod(accountId, from, to, limit);
             case CHART_TYPE_TRACKS:
-                return this.chartService.getAdHocAccountTrackChartsForPeriod(accountId, from, to);
+                return this.chartService.getAdHocAccountTrackChartsForPeriod(accountId, from, to, limit);
             default:
                 throw new Error(`Illegal state: unknown chart type ${type}`);
         }

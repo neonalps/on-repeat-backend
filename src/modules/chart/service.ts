@@ -1,6 +1,6 @@
 import { PlayedTrackService } from "@src/modules/played-tracks/service";
 import { isNotDefined, removeNull, requireNonNull } from "@src/util/common";
-import { validateNotNull, validateTrue } from "@src/util/validation";
+import { validateNotBlank, validateNotNull, validateTrue } from "@src/util/validation";
 import { CatalogueService } from "@src/modules/catalogue/service";
 import { TrackDao } from "@src/models/classes/dao/track";
 import logger from "@src/log/logger";
@@ -14,10 +14,40 @@ import { AccountChartDetailsDao } from "@src/models/classes/dao/account-chart-de
 import { AccountChartItemApiDto } from "@src/models/api/account-chart-item";
 import { TrackApiDto } from "@src/models/api/track";
 import { TrackChartItemDao } from "@src/models/classes/dao/track-chart-item";
+import { ArtistTrackChartItemDao } from "@src/models/classes/dao/artist-track-chart-item";
+import { ArtistDao } from "@src/models/classes/dao/artist";
+import { AlbumDao } from "@src/models/classes/dao/album";
+import { IllegalStateError } from "@src/api/error/illegal-state-error";
+import { AccountChartDetailsApiDto } from "@src/models/api/account-chart-details";
+import { AuthenticationContext } from "@src/router/types";
 
 export interface GetAccountChartsPaginationParams extends PaginationParams<Date> {};
 
+export interface CreateAccountChartRequest {
+    accountId: number;
+    name: string;
+    type: string;
+    from: Date;
+    to: Date;
+}
+
+export interface UpdateAccountChartRequest {
+    accountChartId: number;
+    name: string;
+    type: string;
+    from: Date;
+    to: Date;
+    items: AccountChartItem[];
+}
+
+export interface AccountChartItem {
+    itemId: number;
+    place: number;
+}
+
 export class ChartService {
+
+    static readonly ERROR_CHART_NOT_FOUND = "No chart with this ID exists";
 
     private static readonly CHART_DEFAULT_LIMIT = 10;
     private static readonly ACCOUNT_TRACK_CHART_MAX_LIMIT = 100;
@@ -38,6 +68,13 @@ export class ChartService {
         this.catalogueService = requireNonNull(catalogueService);
         this.mapper = requireNonNull(mapper);
         this.playedTrackService = requireNonNull(playedTrackService);
+    }
+
+    public async checkAccountChartExists(accountId: number, accountChartId: number): Promise<boolean> {
+        validateNotNull(accountId, "accountId");
+        validateNotNull(accountChartId, "accountChartId");
+
+        return this.mapper.checkAccountChartExists(accountId, accountChartId);
     }
 
     public async getAdHocAccountTrackChartsForPeriod(accountId: number, from: Date | null, to: Date | null, limit: number = ChartService.CHART_DEFAULT_LIMIT): Promise<AccountChartItemApiDto<TrackApiDto>[]> {
@@ -143,6 +180,85 @@ export class ChartService {
         validateNotNull(trackId, "trackId");
 
         return this.mapper.getEntriesForTrack(trackId);
+    }
+
+    public async getTrackEntriesForArtist(accountId: number, artistId: number): Promise<ArtistTrackChartItemDao[]> {
+        validateNotNull(accountId, "accountId");
+        validateNotNull(artistId, "artistId");
+
+        return this.mapper.getTrackEntriesForArtist(accountId, artistId);
+    }
+
+    public async fullTextSearch(input: string): Promise<AccountChartDao[]> {
+        validateNotBlank(input, "input");
+
+        return this.mapper.fullTextSearch(input);
+    }
+
+    public async createAccountChart(request: CreateAccountChartRequest): Promise<AccountChartDetailsApiDto<unknown>> {
+        validateNotNull(request, "request");
+        validateNotNull(request.accountId, "request.accountId");
+        validateNotBlank(request.name, "request.name");
+        validateNotBlank(request.type, "request.type");
+        validateNotNull(request.from, "request.from");
+        validateNotNull(request.to, "request.to");
+        validateTrue(request.from < request.to, "from must be before to");
+
+        const accountChartId = await this.mapper.createAccountChart(request);
+        return this.loadAccountChartDetails(accountChartId);
+    }
+
+    public async updateAccountChart(request: UpdateAccountChartRequest): Promise<AccountChartDetailsApiDto<unknown>> {
+        validateNotNull(request, "request");
+        validateNotNull(request.accountChartId, "request.accountChartId");
+        validateNotBlank(request.name, "request.name");
+        validateNotBlank(request.type, "request.type");
+        validateNotNull(request.from, "request.from");
+        validateNotNull(request.to, "request.to");
+        validateTrue(request.from < request.to, "from must be before to");
+
+        await this.mapper.putAccountChart(request);
+        return this.loadAccountChartDetails(request.accountChartId);
+    }
+
+    public async loadAccountChartDetails(chartId: number): Promise<AccountChartDetailsApiDto<unknown>> {
+        const accountChartDetails = await this.getAccountChartDetails(chartId);
+        if (isNotDefined(accountChartDetails)) {
+            throw new IllegalStateError(ChartService.ERROR_CHART_NOT_FOUND);
+        }
+
+        const accountChartDetailsItems = (accountChartDetails as AccountChartDetailsDao).items;
+
+        const trackIds = new Set((accountChartDetails as AccountChartDetailsDao).items.map(item => item.itemId));
+        const tracks = await this.catalogueService.getMultipleTracksById(trackIds);
+
+        const artistIds = new Set(tracks.map(item => item.artistIds).flat());
+        const artists = await this.catalogueService.getMultipleArtistsById(Array.from(artistIds));
+        
+        const albumIds = new Set(tracks.filter(removeNull).map(item => item.albumId).flat()) as Set<number>;
+        const albums = await this.catalogueService.getMultipleAlbumsById(Array.from(albumIds));
+
+        const items: AccountChartItemApiDto<TrackApiDto>[] = [];
+        for (const item of accountChartDetailsItems) {
+            const track = tracks.find(t => item.itemId === t.id);
+            if (!track) {
+                continue;
+            }
+
+            const trackArtists = track.artistIds.map(id => artists.find(a => a.id === id)) as ArtistDao[];
+            const trackAlbum = track.albumId !== null ? albums.find(a => a.id === track.albumId) as AlbumDao : undefined;
+
+            items.push({
+                place: item.place,
+                playCount: item.playCount,
+                item: this.apiHelper.convertTrackApiDto(track, trackArtists, trackAlbum),
+            });
+        }
+
+        return {
+            accountChart: this.apiHelper.convertAccountChartApiDto((accountChartDetails as AccountChartDetailsDao).chart),
+            items,
+        }
     }
 
 }

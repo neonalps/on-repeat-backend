@@ -2,7 +2,7 @@ import logger from "@src/log/logger";
 import { validateNotNull } from "@src/util/validation";
 import { CreateTrackDto } from "@src/models/classes/dto/create-track";
 import { TrackDao } from "@src/models/classes/dao/track";
-import { requireNonNull } from "@src/util/common";
+import { removeNull, requireNonNull } from "@src/util/common";
 import { AlbumDao } from "@src/models/classes/dao/album";
 import { CreateAlbumDto } from "@src/models/classes/dto/create-album";
 import { UpdateAlbumDto } from "@src/models/classes/dto/update-album";
@@ -20,6 +20,8 @@ import { SimpleAlbumDao } from "@src/models/classes/dao/album-simple";
 import { CreateArtistImageDto } from "@src/models/classes/dto/create-artist-image";
 import { ImageDao } from "@src/models/classes/dao/image";
 import { SimpleArtistDao } from "@src/models/classes/dao/artist-simple";
+import { DateUtils } from "@src/util/date";
+import { ReleaseDateDao } from "@src/models/classes/dao/release-date";
 
 interface TrackBucketContext {
     trackId: number;
@@ -264,6 +266,35 @@ export class CatalogueService {
 
             await this.trackService.updateBucket(currentTrack.id, trackBucketId);
         }
+    }
+
+    public async getTrackReleaseDate(trackId: number): Promise<ReleaseDateDao | null> {
+        const trackBucketItems = await this.trackService.getAllBucketItemsForTrackId(trackId);
+        if (!trackBucketItems || trackBucketItems.length === 0) {
+            return null;
+        }
+
+        const albumIds = new Set(trackBucketItems
+            .map(item => item.albumId)
+            .filter(removeNull) as number[]);
+
+        const albums = await this.albumService.getMultipleById(Array.from(albumIds));
+        const releaseDates: ReleaseDateDao[] = albums
+            .filter(item => item.releaseDate !== null)
+            .map(item => {
+                return ReleaseDateDao.Builder
+                    .withReleaseDate(item.releaseDate as Date)
+                    .withPrecision(item.releaseDatePrecision as string)
+                    .build();
+            });
+        
+        let earliest: ReleaseDateDao | null = null;
+        for (const item of releaseDates) {
+            if (earliest === null || item.releaseDate < earliest.releaseDate) {
+                earliest = item;
+            }
+        }
+        return earliest;
     }
 
     private async getOrderedTrackBucketContextsForIsrc(isrc: string): Promise<TrackBucketContext[]> {

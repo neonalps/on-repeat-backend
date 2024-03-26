@@ -1,6 +1,6 @@
 import { TrackDao } from "@src/models/classes/dao/track";
 import { CreateTrackDto } from "@src/models/classes/dto/create-track";
-import { validateNotBlank, validateNotEmpty, validateNotNull, validateTrue } from "@src/util/validation";
+import { validateNotBlank, validateNotNull, validateTrue } from "@src/util/validation";
 import { requireNonNull } from "@src/util/common";
 import { TrackMapper } from "./mapper";
 import { UpdateTrackDto } from "@src/models/classes/dto/update-track";
@@ -59,7 +59,13 @@ export class TrackService {
     public async fullTextSearch(input: string): Promise<TrackDao[]> {
         validateNotBlank(input, "input");
 
-        return this.mapper.fullTextSearch(input);
+        return this.mapper.magicSearch(input);
+    }
+
+    public async getAllBucketItemsForTrackId(trackId: number): Promise<TrackDao[]> {
+        validateNotNull(trackId, "trackId");
+
+        return this.mapper.getAllBucketItemsForTrackId(trackId);
     }
 
 }
