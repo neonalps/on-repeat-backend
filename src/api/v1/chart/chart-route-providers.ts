@@ -9,21 +9,27 @@ import { ApiHelper } from "@src/api/helper";
 import { PaginationService } from "@src/modules/pagination/service";
 import { GetAccountChartDetailsHandler } from "@src/api/v1/chart/get-by-id/handler";
 import { GetAccountChartDetailsRouteProvider } from "@src/api/v1/chart/get-by-id/route-provider";
-import { CatalogueService } from "@src/modules/catalogue/service";
+import { CreateAccountChartHandler } from "@src/api/v1/chart/create/handler";
+import { CreateAccountChartRouteProvider } from "@src/api/v1/chart/create/route-provider";
+import { PutAccountChartHandler } from "@src/api/v1/chart/put-by-id/handler";
+import { PutAccountChartRouteProvider } from "@src/api/v1/chart/put-by-id/route-provider";
 
 export const getChartApiRouteProviders = () => {
     const apiHelper = dependencyManager.get<ApiHelper>(Dependencies.ApiHelper);
-    const catalogueService = dependencyManager.get<CatalogueService>(Dependencies.CatalogueService);
     const chartService = dependencyManager.get<ChartService>(Dependencies.ChartService);
     const paginationService = dependencyManager.get<PaginationService>(Dependencies.PaginationService);
 
+    const createAccountChartHandler = new CreateAccountChartHandler(chartService);
     const getAccountChartsHandler = new GetAccountChartsHandler(apiHelper, chartService, paginationService);
-    const getAccountChartDetailsHandler = new GetAccountChartDetailsHandler(apiHelper, catalogueService, chartService);
+    const getAccountChartDetailsHandler = new GetAccountChartDetailsHandler(chartService);
     const getChartForPeriodHandler = new GetChartForPeriodHandler(chartService);
+    const putAccountChartsHandler = new PutAccountChartHandler(chartService);
 
     return [
+        new CreateAccountChartRouteProvider(createAccountChartHandler),
         new GetAccountChartsRouteProvider(getAccountChartsHandler),
         new GetAccountChartDetailsRouteProvider(getAccountChartDetailsHandler),
         new GetChartForPeriodRouteProvider(getChartForPeriodHandler),
+        new PutAccountChartRouteProvider(putAccountChartsHandler),
     ];
 }

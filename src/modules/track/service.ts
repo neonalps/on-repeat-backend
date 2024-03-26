@@ -62,4 +62,10 @@ export class TrackService {
         return this.mapper.magicSearch(input);
     }
 
+    public async getAllBucketItemsForTrackId(trackId: number): Promise<TrackDao[]> {
+        validateNotNull(trackId, "trackId");
+
+        return this.mapper.getAllBucketItemsForTrackId(trackId);
+    }
+
 }
