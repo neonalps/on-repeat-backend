@@ -6,7 +6,7 @@ import { PlayedTrackApiDto } from "@src/models/api/played-track";
 import { AccountDao } from "@src/models/classes/dao/account";
 import { GetPlayedTracksPaginationParams, PlayedTrackService } from "@src/modules/played-tracks/service";
 import { AuthenticationContext, RouteHandler } from "@src/router/types";
-import { requireNonNull } from "@src/util/common";
+import { isDefined, requireNonNull } from "@src/util/common";
 import { ApiHelper } from "@src/api/helper";
 
 export class GetPlayedTracksPaginatedHandler implements RouteHandler<GetPlayedTracksPaginatedRequestDto, PaginatedResponseDto<PlayedTrackApiDto>> {
@@ -39,11 +39,15 @@ export class GetPlayedTracksPaginatedHandler implements RouteHandler<GetPlayedTr
             const order: SortOrder = dto.order === SortOrder.ASCENDING ? SortOrder.ASCENDING : SortOrder.DESCENDING;
             const limit: number = dto.limit || 50;
             const lastSeen: Date = order === SortOrder.ASCENDING ? MIN_DATE : MAX_DATE;
+            const from: Date | undefined = isDefined(dto.from) ? new Date(dto.from) : undefined;
+            const to: Date | undefined = isDefined(dto.to) ? new Date(dto.to): undefined;
 
             return {
                 order,
                 limit,
                 lastSeen,
+                from,
+                to,
             };
         }
 
@@ -60,6 +64,14 @@ export class GetPlayedTracksPaginatedHandler implements RouteHandler<GetPlayedTr
             order: oldParams.order,
             lastSeen: this.paginationService.getLastElement(items).playedAt,
         };
+
+        if (isDefined(oldParams.from)) {
+            newParams['from'] = oldParams.from;
+        }
+
+        if (isDefined(oldParams.to)) {
+            newParams['to'] = oldParams.to;
+        }
 
         return this.paginationService.encode(newParams);
     }
