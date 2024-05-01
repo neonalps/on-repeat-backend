@@ -157,7 +157,7 @@ export class ChartMapper {
             .filter(removeNull) as AccountChartItemDao[];   
     }
 
-    public async getEntriesForTrack(trackId: number): Promise<TrackChartItemDao[]> {
+    public async getEntriesForTrackBucket(trackBucketId: number): Promise<TrackChartItemDao[]> {
         const result = await sql<TrackChartItemDaoInterface[]>`
             select
                 c.id as chart_id,
@@ -168,7 +168,7 @@ export class ChartMapper {
                 chart c left join
                 track_chart_details tcd on tcd.chart_id = c.id
             where
-                tcd.track_id = ${ trackId }
+                tcd.track_id = ${ trackBucketId }
             order by
                 c.from ASC
         `;

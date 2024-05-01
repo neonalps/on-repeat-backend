@@ -159,17 +159,26 @@ export class PlayedTrackMapper {
             .filter(removeNull) as PlayedTrackHistoryDao[];
     }
 
-    public async getAllIdsForAccountPaginated(accountId: number, lastSeenPlayedAt: Date, limit: number, order: SortOrder): Promise<number[]> {
+    public async getAllIdsForAccountPaginated(
+        accountId: number, 
+        lastSeenPlayedAt: Date, 
+        from: Date | undefined, 
+        to: Date | undefined, 
+        limit: number, 
+        order: SortOrder
+    ): Promise<number[]> {
         const sqlSortOrder = this.determineSortOrder(order);
 
         const result = await sql<EntityId[]>`
             select
-                id
+                pt.id
             from
-                played_track
+                played_track pt
             where
-                account_id = ${ accountId }
-                and played_at ${order === SortOrder.ASCENDING ? sql`>` : sql`<`} ${ lastSeenPlayedAt }
+                pt.account_id = ${ accountId }
+                ${isDefined(from) ? this.wherePlayedAtFrom(from as Date) : sql``}
+                ${isDefined(to) ? this.wherePlayedAtTo(to as Date) : sql``}
+                and pt.played_at ${order === SortOrder.ASCENDING ? sql`>` : sql`<`} ${ lastSeenPlayedAt }
             order by
                 played_at ${ sqlSortOrder }
             limit ${ limit }

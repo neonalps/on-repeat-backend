@@ -179,7 +179,12 @@ export class ChartService {
     public async getEntriesForTrack(trackId: number): Promise<TrackChartItemDao[]> {
         validateNotNull(trackId, "trackId");
 
-        return this.mapper.getEntriesForTrack(trackId);
+        const track = await this.catalogueService.getTrackById(trackId);
+        if (!track) {
+            return [];
+        }
+
+        return this.mapper.getEntriesForTrackBucket(track.bucket);
     }
 
     public async getTrackEntriesForArtist(accountId: number, artistId: number): Promise<ArtistTrackChartItemDao[]> {

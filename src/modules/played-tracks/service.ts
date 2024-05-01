@@ -20,7 +20,10 @@ import { SimpleArtistDao } from "@src/models/classes/dao/artist-simple";
 import { ArtistDao } from "@src/models/classes/dao/artist";
 import { PlayedTrackDetailsNoAlbumImagesDao } from "@src/models/classes/dao/played-track-details-no-album-images";
 
-export interface GetPlayedTracksPaginationParams extends PaginationParams<Date> {};
+export interface GetPlayedTracksPaginationParams extends PaginationParams<Date> {
+    from?: Date,
+    to?: Date,
+};
 export interface GetPlayedTrackHistoryPaginationParams extends PaginationParams<Date> {};
 
 export interface GetArtistPlayedTracksPaginationParams extends PaginationParams<number> {
@@ -84,7 +87,7 @@ export class PlayedTrackService {
         validateNotNull(paginationParams.order, "paginationParams.order");
         validateNotNull(paginationParams.lastSeen, "paginationParams.lastSeen");
 
-        const orderedIds = await this.getAllOrderedPaginatedResult(accountId, paginationParams.lastSeen, paginationParams.limit, paginationParams.order);
+        const orderedIds = await this.getAllOrderedPaginatedResult(accountId, paginationParams.lastSeen, paginationParams.from, paginationParams.to, paginationParams.limit, paginationParams.order);
 
         const playedTrackDetails = await this.mapper.getAllForAccountPaginatedDetails(orderedIds);
         const playedTrackDetailsWithAlbumImages = await this.loadPlayedTrackDetailsWithArtistImages(playedTrackDetails);
@@ -162,8 +165,8 @@ export class PlayedTrackService {
         return result;
     }
 
-    private async getAllOrderedPaginatedResult(accountId: number, lastSeenPlayedAt: Date, limit: number, order: SortOrder): Promise<number[]> {
-        return this.mapper.getAllIdsForAccountPaginated(accountId, lastSeenPlayedAt, limit, order);
+    private async getAllOrderedPaginatedResult(accountId: number, lastSeenPlayedAt: Date, from: Date | undefined, to: Date | undefined, limit: number, order: SortOrder): Promise<number[]> {
+        return this.mapper.getAllIdsForAccountPaginated(accountId, lastSeenPlayedAt, from, to, limit, order);
     }
 
     private async getArtistTracksOrderedOffsetPaginatedResult(accountId: number, artistId: number, lastSeen: number, limit: number, sortBy: GetArtistPlayedTracksSortKey, order: SortOrder): Promise<PlayedInfoItem[]> {
