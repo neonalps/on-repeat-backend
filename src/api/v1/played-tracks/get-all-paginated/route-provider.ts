@@ -21,6 +21,8 @@ export class GetPlayedTracksPaginatedRouteProvider implements RouteProvider<GetP
                 required: [],
                 properties: {
                     ...PAGINATED_REQUEST_QUERYSTRING_SCHEMA_PROPERTIES,
+                    from: { type: 'string' },
+                    to: { type: 'string' },
                 },
             }
         };

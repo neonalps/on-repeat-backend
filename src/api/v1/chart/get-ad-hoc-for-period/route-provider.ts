@@ -21,10 +21,10 @@ export class GetChartForPeriodRouteProvider implements RouteProvider<CreateChart
                 required: [],
                 properties: {
                     from: { 
-                        type: 'number', 
+                        type: 'string', 
                     },
                     to: { 
-                        type: 'number', 
+                        type: 'string', 
                     },
                     limit: {
                         type: 'number',
