@@ -20,8 +20,8 @@ export class GetChartForPeriodHandler implements RouteHandler<CreateChartsForPer
         const accountId = (context.account as AccountDao).id;
         
         const type = isDefined(dto.type) ? dto.type : CHART_TYPE_TRACKS;
-        const from = isDefined(dto.from) ? DateUtils.getDateFromUnixTimestamp(dto.from) : null;
-        const to = isDefined(dto.to) ? DateUtils.getDateFromUnixTimestamp(dto.to) : null;
+        const from = isDefined(dto.from) ? new Date(dto.from) : null;
+        const to = isDefined(dto.to) ? new Date(dto.to) : null;
         const limit = isDefined(dto.limit) ? dto.limit : 10;
 
         if (limit < 1 || limit > 100) {

@@ -174,7 +174,9 @@ export class SpotifyMusicProvider extends MusicProvider {
             }
         }
 
-        await this.catalogueService.createArtistImageRelations(createArtistImageDtos);
+        if (createArtistImageDtos.length > 0) {
+            await this.catalogueService.createArtistImageRelations(createArtistImageDtos);
+        }
     }
 
     public findSpotifyArtistIds(playedTracks: SpotifyPlayedTrackDto[]): string[] {
