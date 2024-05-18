@@ -13,6 +13,8 @@ import { CreateAccountChartHandler } from "@src/api/v1/chart/create/handler";
 import { CreateAccountChartRouteProvider } from "@src/api/v1/chart/create/route-provider";
 import { PutAccountChartHandler } from "@src/api/v1/chart/put-by-id/handler";
 import { PutAccountChartRouteProvider } from "@src/api/v1/chart/put-by-id/route-provider";
+import { GetGeneratedChartsHandler } from "@src/api/v1/chart/get-all-generated/handler";
+import { GetGeneratedChartsRouteProvider } from "@src/api/v1/chart/get-all-generated/route-provider";
 
 export const getChartApiRouteProviders = () => {
     const apiHelper = dependencyManager.get<ApiHelper>(Dependencies.ApiHelper);
@@ -23,6 +25,7 @@ export const getChartApiRouteProviders = () => {
     const getAccountChartsHandler = new GetAccountChartsHandler(apiHelper, chartService, paginationService);
     const getAccountChartDetailsHandler = new GetAccountChartDetailsHandler(chartService);
     const getChartForPeriodHandler = new GetChartForPeriodHandler(chartService);
+    const getGeneratedChartsHandler = new GetGeneratedChartsHandler();
     const putAccountChartsHandler = new PutAccountChartHandler(chartService);
 
     return [
@@ -30,6 +33,7 @@ export const getChartApiRouteProviders = () => {
         new GetAccountChartsRouteProvider(getAccountChartsHandler),
         new GetAccountChartDetailsRouteProvider(getAccountChartDetailsHandler),
         new GetChartForPeriodRouteProvider(getChartForPeriodHandler),
+        new GetGeneratedChartsRouteProvider(getGeneratedChartsHandler),
         new PutAccountChartRouteProvider(putAccountChartsHandler),
     ];
 }
