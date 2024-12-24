@@ -4,16 +4,18 @@ import { CreateChartsForPeriodRequestDto } from "@src/models/api/create-charts-f
 import { AccountDao } from "@src/models/classes/dao/account";
 import { CHART_TYPE_ARTISTS, CHART_TYPE_TRACKS } from "@src/modules/chart/constants";
 import { ChartService } from "@src/modules/chart/service";
+import { PlayedTrackService } from "@src/modules/played-tracks/service";
 import { AuthenticationContext, RouteHandler } from "@src/router/types";
 import { isDefined, requireNonNull } from "@src/util/common";
-import { DateUtils } from "@src/util/date";
 
 export class GetChartForPeriodHandler implements RouteHandler<CreateChartsForPeriodRequestDto, ChartApiDto<AccountChartItemApiDto<unknown>>> {
 
     private readonly chartService: ChartService;
+    private readonly playedTrackService: PlayedTrackService;
 
-    constructor(chartService: ChartService) {
+    constructor(chartService: ChartService, playedTrackService: PlayedTrackService) {
         this.chartService = requireNonNull(chartService);
+        this.playedTrackService = requireNonNull(playedTrackService);
     }
 
     public async handle(context: AuthenticationContext, dto: CreateChartsForPeriodRequestDto): Promise<ChartApiDto<AccountChartItemApiDto<unknown>>> {
@@ -28,12 +30,18 @@ export class GetChartForPeriodHandler implements RouteHandler<CreateChartsForPer
             throw new Error(`Limit must be between 1 and 100`);
         }
 
-        const items = await this.getChartItems(type, accountId, from, to, limit);
+        const [items, stats] = await Promise.all([
+            this.getChartItems(type, accountId, from, to, limit),
+            this.playedTrackService.getPlayedTrackStatsForPeriod(accountId, from, to),
+        ])
 
         let response: ChartApiDto<AccountChartItemApiDto<unknown>>;
         response = {
             type,
             items,
+            stats: {
+                tracksPlayed: stats.timesPlayed,
+            }
         };
 
         if (from !== null) {

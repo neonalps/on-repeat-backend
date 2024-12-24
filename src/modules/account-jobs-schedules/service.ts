@@ -5,7 +5,7 @@ import { AccountJobScheduleDao } from "@src/models/classes/dao/account-job-sched
 import { validateNotNull } from "@src/util/validation";
 import { JobStatus } from "@src/models/enum/job-status";
 import { UuidSource } from "@src/util/uuid";
-import { PaginationParams, SortOrder } from "@src/modules/pagination/constants";
+import { PaginationParams } from "@src/modules/pagination/constants";
 
 export interface GetAccountJobSchedulesPaginationParams extends PaginationParams<number> {
     state: JobStatus | null,
@@ -83,6 +83,24 @@ export class AccountJobScheduleService {
         validateNotNull(scheduleId, "scheduleId");
 
         await this.mapper.markFinished(scheduleId, JobStatus.FAILED.toString(), reason);
+    }
+
+    public async checkUpcomingReadyAccountJobScheduleExistsForAccountJob(accountJobId: number): Promise<boolean> {
+        validateNotNull(accountJobId, "accountJobId");
+
+        return this.mapper.checkUpcomingReadyAccountJobScheduleExistsForAccountJob(accountJobId);
+    }
+
+    public getLastSuccessfulAccountJobExecution(accountJobId: number): Promise<Date | null> {
+        validateNotNull(accountJobId, "accountJobId");
+
+        return this.mapper.getLastSuccessfulAccountJobExecution(accountJobId);
+    }
+
+    public getNextScheduledAccountJobRun(accountJobId: number): Promise<Date | null> {
+        validateNotNull(accountJobId, "accountJobId");
+
+        return this.mapper.getNextScheduledAccountJobRun(accountJobId);
     }
 
 }
