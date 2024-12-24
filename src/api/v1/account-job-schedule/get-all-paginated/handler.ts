@@ -1,7 +1,6 @@
 import { AuthenticationContext, RouteHandler } from "@src/router/types";
 import { isDefined, removeNull, requireNonNull } from "@src/util/common";
 import { AccountDao } from "@src/models/classes/dao/account";
-import { GetAllAccountTokensRequestDto } from "@src/models/api/get-all-account-tokens-request";
 import { PaginatedResponseDto } from "@src/models/api/paginated-response";
 import { ApiHelper } from "@src/api/helper";
 import { PaginationService } from "@src/modules/pagination/service";
@@ -24,7 +23,7 @@ export class GetAllAccountJobSchedulesPaginatedHandler implements RouteHandler<G
         this.paginationService = requireNonNull(paginationService);
     }
     
-    public async handle(context: AuthenticationContext, dto: GetAllAccountTokensRequestDto): Promise<PaginatedResponseDto<AccountJobScheduleApiDto>> {
+    public async handle(context: AuthenticationContext, dto: GetAccountJobSchedulesPaginatedRequestDto): Promise<PaginatedResponseDto<AccountJobScheduleApiDto>> {
         const accountId = (context.account as AccountDao).id;
         this.paginationService.validateQueryParams(dto);
         const paginationParams = this.getPaginationParams(dto);

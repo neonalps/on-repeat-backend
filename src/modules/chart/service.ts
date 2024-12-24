@@ -19,7 +19,6 @@ import { ArtistDao } from "@src/models/classes/dao/artist";
 import { AlbumDao } from "@src/models/classes/dao/album";
 import { IllegalStateError } from "@src/api/error/illegal-state-error";
 import { AccountChartDetailsApiDto } from "@src/models/api/account-chart-details";
-import { AuthenticationContext } from "@src/router/types";
 
 export interface GetAccountChartsPaginationParams extends PaginationParams<Date> {};
 

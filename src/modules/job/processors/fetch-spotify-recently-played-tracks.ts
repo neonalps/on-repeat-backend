@@ -18,6 +18,6 @@ export class FetchSpotifyRecentlyPlayedTracksJob implements JobProcessor {
 
     public async process(executionContext: JobExecutionContext): Promise<void> {
         await this.spotifyMusicProvider.fetchAndProcessRecentlyPlayedTracks(executionContext.account.id);
-    }
+    } 
 
 }

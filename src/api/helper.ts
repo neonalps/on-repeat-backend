@@ -1,5 +1,6 @@
 import { ApiConfig } from "@src/api/config";
 import { AccountChartApiDto } from "@src/models/api/account-chart";
+import { AccountJobApiDto } from "@src/models/api/account-job";
 import { AccountJobScheduleApiDto } from "@src/models/api/account-job-schedule";
 import { AccountTokenApiDto } from "@src/models/api/account-token";
 import { AlbumApiDto } from "@src/models/api/album";
@@ -11,6 +12,7 @@ import { PlayedHistoryApiDto } from "@src/models/api/played-history";
 import { PlayedTrackApiDto } from "@src/models/api/played-track";
 import { TrackApiDto } from "@src/models/api/track";
 import { AccountChartDao } from "@src/models/classes/dao/account-chart";
+import { AccountJobDao } from "@src/models/classes/dao/account-job";
 import { AccountJobScheduleDao } from "@src/models/classes/dao/account-job-schedule";
 import { AccountTokenDao } from "@src/models/classes/dao/account-token";
 import { AlbumDao } from "@src/models/classes/dao/album";
@@ -23,6 +25,7 @@ import { PlayedTrackHistoryDao } from "@src/models/classes/dao/played-track-hist
 import { SimpleTrackDetailsDao } from "@src/models/classes/dao/simple-track-details";
 import { TrackDao } from "@src/models/classes/dao/track";
 import { TrackChartItemDao } from "@src/models/classes/dao/track-chart-item";
+import { AccountJobDetails } from "@src/models/interface/account-job-details";
 import { isDefined, removeNull, requireNonNull } from "@src/util/common";
 
 interface PublicArtist {
@@ -137,6 +140,23 @@ export class ApiHelper {
             width: image.width,
             url: image.url,
         }
+    }
+
+    public convertAccountJobApiDto(item: AccountJobDetails): AccountJobApiDto | null {
+        if (!item) {
+            return null;
+        }
+
+        return {
+            id: item.id,
+            displayName: item.displayName,
+            intervalSeconds: item.intervalSeconds,
+            failureCount: item.failureCount,
+            enabled: item.enabled,
+            createdAt: item.createdAt,
+            lastSuccessfulExecution: item.lastSuccessfulExecution,
+            nextScheduledRun: item.nextScheduleRun,
+        };
     }
 
     public convertAccountJobScheduleApiDto(item: AccountJobScheduleDao): AccountJobScheduleApiDto | null {

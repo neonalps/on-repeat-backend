@@ -20,7 +20,6 @@ import { SimpleAlbumDao } from "@src/models/classes/dao/album-simple";
 import { CreateArtistImageDto } from "@src/models/classes/dto/create-artist-image";
 import { ImageDao } from "@src/models/classes/dao/image";
 import { SimpleArtistDao } from "@src/models/classes/dao/artist-simple";
-import { DateUtils } from "@src/util/date";
 import { ReleaseDateDao } from "@src/models/classes/dao/release-date";
 
 interface TrackBucketContext {

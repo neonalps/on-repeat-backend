@@ -9,6 +9,7 @@ import { JobExecutionContext } from "@src/modules/scheduler/scheduler";
 import { AccountJobScheduleDao } from "@src/models/classes/dao/account-job-schedule";
 import { AccountJobDao } from "@src/models/classes/dao/account-job";
 import { AccountService } from "@src/modules/account/service";
+import { AccountJobDetails } from "@src/models/interface/account-job-details";
 
 export class JobHelper {
 
@@ -47,6 +48,31 @@ export class JobHelper {
         await this.insertInitialAccountJobSchedule(accountId, JobHelper.JOB_ID_FETCH_SPOTIFY_RECENT_PLAYED_TRACKS);
     }
 
+    public async getAccountJobDetails(accountJobId: number): Promise<AccountJobDetails | null> {
+        const accountJob = await this.accountJobService.getById(accountJobId);
+        if (accountJob === null) {
+            return null;
+        }
+
+        const [job, lastSuccessfulExecution, nextScheduledRun] = await Promise.all([
+            this.jobService.getById(accountJob.jobId),
+            this.accountJobScheduleService.getLastSuccessfulAccountJobExecution(accountJob.id),
+            this.accountJobScheduleService.getNextScheduledAccountJobRun(accountJob.id),
+        ]);
+
+        return {
+            id: accountJob.id,
+            displayName: job?.displayName || "Unknown job",
+            enabled: accountJob.enabled,
+            intervalSeconds: accountJob.intervalSeconds,
+            failureCount: accountJob.failureCount,
+            createdAt: accountJob.createdAt,
+            updatedAt: accountJob.updatedAt || undefined,
+            lastSuccessfulExecution: lastSuccessfulExecution || undefined,
+            nextScheduleRun: nextScheduledRun || undefined,
+        }
+    }
+
     private async insertInitialAccountJobSchedule(accountId: number, jobId: number): Promise<void> {
         validateNotNull(accountId, "accountId");
         validateNotNull(jobId, "jobId");
@@ -69,9 +95,20 @@ export class JobHelper {
         }
 
         const initialScheduleAfter = this.timeSource.getNowPlusMilliSeconds(job.initialDelayMs);
-        const accountJobSchedule = await this.accountJobScheduleService.create(accountJob.id, initialScheduleAfter);
-        if (!accountJobSchedule) {
-            throw new Error(JobHelper.ERROR_CREATE_ACCOUNT_JOB_SCHEDULE);
+        await this.createAccountJobScheduleForAccountJob(accountJob.id, initialScheduleAfter);
+    }
+
+    public async enableAccountJobAndInsertScheduleIfNecessary(accountJobId: number): Promise<void> {
+        const accountJob = await this.accountJobService.getById(accountJobId);
+        if (accountJob === null || accountJob.enabled === true) {
+            return;
+        }
+
+        await this.accountJobService.enableAccountJob(accountJobId);
+
+        // create account job schedule in case it doesn't exist
+        if (!(await this.accountJobScheduleService.checkUpcomingReadyAccountJobScheduleExistsForAccountJob(accountJobId))) {
+            await this.createAccountJobScheduleForAccountJob(accountJobId, this.timeSource.getNow());
         }
     }
 
@@ -193,6 +230,13 @@ export class JobHelper {
 
         const baseDate = scheduledAt !== null ? scheduledAt : this.timeSource.getNow();
         return this.timeSource.addSeconds(baseDate, intervalSeconds);
+    }
+
+    private async createAccountJobScheduleForAccountJob(accountJobId: number, scheduleAfter: Date): Promise<void> {
+        const accountJobSchedule = await this.accountJobScheduleService.create(accountJobId, scheduleAfter);
+        if (!accountJobSchedule) {
+            throw new Error(JobHelper.ERROR_CREATE_ACCOUNT_JOB_SCHEDULE);
+        }
     }
 
 }
