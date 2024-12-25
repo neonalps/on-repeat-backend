@@ -152,16 +152,16 @@ export class AccountJobScheduleMapper {
         return (AccountJobScheduleDao.fromDaoInterface(result[0]) as AccountJobScheduleDao).scheduledAfter;
     }
 
-    public async checkUpcomingReadyAccountJobScheduleExistsForAccountJob(accountJobId: number): Promise<boolean> {
+    public async checkUpcomingReadyAccountJobScheduleExistsForAccountJob(accountJobId: number, now: Date): Promise<boolean> {
         const result = await sql<IdInterface[]>`
             select
                 id
             from
                 account_jobs_schedules
             where
-                id = ${ accountJobId }
+                account_job_id = ${ accountJobId }
                 and state = 'READY'
-                and scheduled_after >= now()
+                and scheduled_after >= ${ now }
         `;
 
         return !!result && result.length >= 1;
