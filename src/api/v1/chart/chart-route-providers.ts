@@ -27,7 +27,7 @@ export const getChartApiRouteProviders = () => {
     const getAccountChartsHandler = new GetAccountChartsHandler(apiHelper, chartService, paginationService);
     const getAccountChartDetailsHandler = new GetAccountChartDetailsHandler(chartService);
     const getChartForPeriodHandler = new GetChartForPeriodHandler(chartService, playedTrackService);
-    const getGeneratedChartsHandler = new GetGeneratedChartsHandler();
+    const getGeneratedChartsHandler = new GetGeneratedChartsHandler(playedTrackService);
     const putAccountChartsHandler = new PutAccountChartHandler(chartService);
 
     return [

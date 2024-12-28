@@ -1,6 +1,6 @@
 import { isDefined, isNotDefined, removeNull, requireNonNull } from "@src/util/common";
 import { PlayedTrackMapper } from "./mapper";
-import { validateNotNull } from "@src/util/validation";
+import { validateNotNull, validateTrue } from "@src/util/validation";
 import { PlayedTrackDao } from "@src/models/classes/dao/played-track";
 import { CreatePlayedTrackDto } from "@src/models/classes/dto/create-played-track";
 import { PlayedInfoDao } from "@src/models/classes/dao/played-info";
@@ -112,6 +112,18 @@ export class PlayedTrackService {
         }
 
         return playedTrackDetailsWithAlbumImages[0];
+    }
+
+    public async getMultiplePlayedTrackDetailsById(playedTrackIds: number[]): Promise<PlayedTrackDetailsDao[]> {
+        validateNotNull(playedTrackIds, "playedTrackIds");
+        
+        if (playedTrackIds.length === 0) {
+            return [];
+        }
+
+        const playedTrackDetails = await this.mapper.getAllForAccountPaginatedDetails(playedTrackIds);
+        const playedTrackDetailsWithAlbumImages = await this.loadPlayedTrackDetailsWithArtistImages(playedTrackDetails);
+        return playedTrackDetailsWithAlbumImages.sort(PlayedTrackService.playedAtComparator(SortOrder.ASCENDING));
     }
 
     public async getPlayedTrackHistoryForAccountPaginated(accountId: number, trackId: number, paginationParams: GetPlayedTrackHistoryPaginationParams): Promise<PlayedTrackHistoryDao[]> {
@@ -232,24 +244,45 @@ export class PlayedTrackService {
         return playedInfo;
     }
 
-    public async getAccountTrackChartsForPeriod(accountId: number, from: Date | null, to: Date | null, limit: number): Promise<ChartItem[]> {
+    public async getPlayedInfoForAccount(accountId: number): Promise<PlayedInfoDao> {
+        validateNotNull(accountId, "accountId");
+
+        const playedInfo = await this.mapper.getPlayedInfoForAccount(accountId); 
+        if (playedInfo === null) {
+            return PlayedTrackService.EMPTY_PLAYED_INFO;
+        }
+
+        return playedInfo;
+    }
+
+    public getAccountTrackChartsForPeriod(accountId: number, from: Date | null, to: Date | null, limit: number): Promise<ChartItem[]> {
         validateNotNull(accountId, "accountId");
         validateNotNull(limit, "limit");
 
         return this.mapper.getAccountTrackChartBucketIdsForPeriod(accountId, from, to, limit);
     }
 
-    public async getAccountArtistChartsForPeriod(accountId: number, from: Date | null, to: Date | null, limit: number): Promise<ChartItem[]> {
+    public getAccountArtistChartsForPeriod(accountId: number, from: Date | null, to: Date | null, limit: number): Promise<ChartItem[]> {
         validateNotNull(accountId, "accountId");
         validateNotNull(limit, "limit");
 
         return this.mapper.getAccountArtistChartForPeriod(accountId, from, to, limit);
     }
 
-    public async getPlayedTrackStatsForPeriod(accountId: number, from: Date | null, to: Date | null): Promise<PlayedStatsDao> {
+    public getPlayedTrackStatsForPeriod(accountId: number, from: Date | null, to: Date | null): Promise<PlayedStatsDao> {
         validateNotNull(accountId, "accountId");
 
         return this.mapper.getPlayedTrackStatsForPeriod(accountId, from, to);
+    }
+
+    public updateIncludeInStatisticsForPeriod(accountId: number, from: Date, to: Date, includeInStatistics: boolean): Promise<number[]> {
+        validateNotNull(accountId, "accountId");
+        validateNotNull(from, "from");
+        validateNotNull(to, "to");
+        validateNotNull(includeInStatistics, "includeInStatistics");
+        validateTrue(from < to, "from must be before to");
+
+        return this.mapper.updateIncludeInStatisticsForPeriod(accountId, from, to, includeInStatistics);
     }
 
     private static playedAtComparator(sortOrder: SortOrder): ((a: PlayedTrackDetailsDao, b: PlayedTrackDetailsDao) => number) | undefined {
