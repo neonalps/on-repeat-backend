@@ -3,6 +3,7 @@ import { JobDaoInterface } from "@src/models/dao/job.dao";
 export class JobDao {
    private _id!: number;
    private _name!: string;
+   private _displayName!: string;
    private _enabled!: boolean;
    private _intervalMs!: number;
    private _initialDelayMs!: number;
@@ -12,6 +13,7 @@ export class JobDao {
    constructor(builder: JobDaoBuilder) {
       this._id = builder.id;
       this._name = builder.name;
+      this._displayName = builder.displayName;
       this._enabled = builder.enabled;
       this._intervalMs = builder.intervalMs;
       this._initialDelayMs = builder.initialDelayMs;
@@ -25,6 +27,10 @@ export class JobDao {
 
    public get name(): string {
       return this._name;
+   }
+
+   public get displayName(): string {
+      return this._displayName;
    }
 
    public get enabled(): boolean {
@@ -55,6 +61,7 @@ export class JobDao {
       return this.Builder
          .withId(item.id)
          .withName(item.name)
+         .withDisplayName(item.displayName)
          .withEnabled(item.enabled)
          .withIntervalMs(item.intervalMs)
          .withInitialDelayMs(item.initialDelayMs)
@@ -67,6 +74,7 @@ export class JobDao {
 class JobDaoBuilder {
    private _id!: number;
    private _name!: string;
+   private _displayName!: string;
    private _enabled!: boolean;
    private _intervalMs!: number;
    private _initialDelayMs!: number;
@@ -80,6 +88,11 @@ class JobDaoBuilder {
 
    public withName(name: string): JobDaoBuilder {
       this._name = name;
+      return this;
+   }
+
+   public withDisplayName(displayName: string): JobDaoBuilder {
+      this._displayName = displayName;
       return this;
    }
 
@@ -114,6 +127,10 @@ class JobDaoBuilder {
 
    public get name(): string {
       return this._name;
+   }
+
+   public get displayName(): string {
+      return this._displayName;
    }
 
    public get enabled(): boolean {

@@ -1,5 +1,6 @@
 import { ApiConfig } from "@src/api/config";
 import { AccountChartApiDto } from "@src/models/api/account-chart";
+import { AccountJobApiDto } from "@src/models/api/account-job";
 import { AccountJobScheduleApiDto } from "@src/models/api/account-job-schedule";
 import { AccountTokenApiDto } from "@src/models/api/account-token";
 import { AlbumApiDto } from "@src/models/api/album";
@@ -8,6 +9,7 @@ import { DetailedArtistChartApiDto } from "@src/models/api/detailed-artist";
 import { DetailedTrackChartApiDto } from "@src/models/api/detailed-track";
 import { ImageApiDto } from "@src/models/api/image";
 import { PlayedHistoryApiDto } from "@src/models/api/played-history";
+import { PlayedInfoApiDto } from "@src/models/api/played-info";
 import { PlayedTrackApiDto } from "@src/models/api/played-track";
 import { TrackApiDto } from "@src/models/api/track";
 import { AccountChartDao } from "@src/models/classes/dao/account-chart";
@@ -18,11 +20,13 @@ import { SimpleAlbumDao } from "@src/models/classes/dao/album-simple";
 import { ArtistDao } from "@src/models/classes/dao/artist";
 import { ArtistTrackChartItemDao } from "@src/models/classes/dao/artist-track-chart-item";
 import { ImageDao } from "@src/models/classes/dao/image";
+import { PlayedInfoDao } from "@src/models/classes/dao/played-info";
 import { PlayedTrackDetailsDao } from "@src/models/classes/dao/played-track-details";
 import { PlayedTrackHistoryDao } from "@src/models/classes/dao/played-track-history";
 import { SimpleTrackDetailsDao } from "@src/models/classes/dao/simple-track-details";
 import { TrackDao } from "@src/models/classes/dao/track";
 import { TrackChartItemDao } from "@src/models/classes/dao/track-chart-item";
+import { AccountJobDetails } from "@src/models/interface/account-job-details";
 import { isDefined, removeNull, requireNonNull } from "@src/util/common";
 
 interface PublicArtist {
@@ -139,6 +143,23 @@ export class ApiHelper {
         }
     }
 
+    public convertAccountJobApiDto(item: AccountJobDetails): AccountJobApiDto | null {
+        if (!item) {
+            return null;
+        }
+
+        return {
+            id: item.id,
+            displayName: item.displayName,
+            intervalSeconds: item.intervalSeconds,
+            failureCount: item.failureCount,
+            enabled: item.enabled,
+            createdAt: item.createdAt,
+            lastSuccessfulExecution: item.lastSuccessfulExecution,
+            nextScheduledRun: item.nextScheduleRun,
+        };
+    }
+
     public convertAccountJobScheduleApiDto(item: AccountJobScheduleDao): AccountJobScheduleApiDto | null {
         if (!item) {
             return null;
@@ -236,6 +257,14 @@ export class ApiHelper {
             place: item.place,
             playCount: item.playCount,
             track: this.convertTrackApiDto(track, artists, album),
+        };
+    }
+
+    public convertPlayedInfo(playedInfo: PlayedInfoDao): PlayedInfoApiDto {
+        return {
+            timesPlayed: playedInfo.timesPlayed,
+            firstPlayedAt: playedInfo.firstPlayedAt,
+            lastPlayedAt: playedInfo.lastPlayedAt,
         };
     }
 

@@ -21,6 +21,8 @@ import { IdNameDao } from "@src/models/classes/dao/id-name";
 import { PlayedTrackDetailsNoAlbumImagesDao } from "@src/models/classes/dao/played-track-details-no-album-images";
 import { PlayedStatsDao } from "@src/models/classes/dao/played-stats";
 import { SimplePlayedStatsDaoInterface } from "@src/models/dao/simple-played-stats.dao";
+import { IdInterface } from "@src/models/dao/id.dao";
+import { setEquals } from "@src/util/collection";
 
 export class PlayedTrackMapper {
 
@@ -450,6 +452,59 @@ export class PlayedTrackMapper {
         }
 
         return PlayedTrackMapper.convertToPlayedStatsDao(from, to, result[0].timesPlayed);
+    }
+
+    public async updateIncludeInStatisticsForPeriod(accountId: number, from: Date, to: Date, includeInStatistics: boolean): Promise<number[]> {
+        return sql.begin(async sql => {
+            const playedTrackIdsInPeriod: IdInterface[] = await sql`
+                select 
+                    id 
+                from
+                    played_track
+                where
+                    account_id = ${ accountId }
+                    and played_at >= ${ from }
+                    and played_at <= ${ to }`;
+
+            if (!playedTrackIdsInPeriod || playedTrackIdsInPeriod.length === 0) {
+                return [];
+            }
+
+            const playedTrackIds = playedTrackIdsInPeriod.map(item => item.id);
+
+            const updatedItems: IdInterface[] = await sql`
+                update played_track set include_in_statistics = ${ includeInStatistics } where id in ${ sql(playedTrackIds) } returning id`;
+            const updatedIds = updatedItems.map(item => item.id);
+
+            const playedTrackIdSet = new Set(playedTrackIds);
+            const updatedSet = new Set(updatedIds);
+
+            if (!setEquals(playedTrackIdSet, updatedSet)) {
+                throw new Error("Something went wrong during updating the played tracks period");
+            }
+
+            return updatedIds;
+        });
+    }
+
+    public async getPlayedInfoForAccount(accountId: number): Promise<PlayedInfoDao | null> {
+        const result = await sql<PlayedInfoDaoInterface[]>`
+            select
+                min(pt.played_at) as first_played_at,
+                max(pt.played_at) as last_played_at,
+                count(pt.played_at)::int as times_played
+            from
+                played_track pt
+            where
+                pt.account_id = ${ accountId }
+                and pt.include_in_statistics = true
+        `;
+
+        if (!result || result.length === 0) {
+            return null;
+        }
+
+        return PlayedInfoDao.fromDaoInterface(result[0]);
     }
 
     private static convertToPlayedStatsDao(from: Date | null, to: Date | null, timesPlayed: number): PlayedStatsDao {

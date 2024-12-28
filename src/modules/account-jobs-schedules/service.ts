@@ -5,7 +5,8 @@ import { AccountJobScheduleDao } from "@src/models/classes/dao/account-job-sched
 import { validateNotNull } from "@src/util/validation";
 import { JobStatus } from "@src/models/enum/job-status";
 import { UuidSource } from "@src/util/uuid";
-import { PaginationParams, SortOrder } from "@src/modules/pagination/constants";
+import { PaginationParams } from "@src/modules/pagination/constants";
+import { TimeSource } from "@src/util/time";
 
 export interface GetAccountJobSchedulesPaginationParams extends PaginationParams<number> {
     state: JobStatus | null,
@@ -14,10 +15,12 @@ export interface GetAccountJobSchedulesPaginationParams extends PaginationParams
 export class AccountJobScheduleService {
 
     private readonly mapper: AccountJobScheduleMapper;
+    private readonly timeSource: TimeSource;
     private readonly uuidSource: UuidSource;
 
-    constructor(mapper: AccountJobScheduleMapper, uuidSource: UuidSource) {
+    constructor(mapper: AccountJobScheduleMapper, timeSource: TimeSource, uuidSource: UuidSource) {
         this.mapper = requireNonNull(mapper);
+        this.timeSource = requireNonNull(timeSource);
         this.uuidSource = requireNonNull(uuidSource);
     }
 
@@ -83,6 +86,24 @@ export class AccountJobScheduleService {
         validateNotNull(scheduleId, "scheduleId");
 
         await this.mapper.markFinished(scheduleId, JobStatus.FAILED.toString(), reason);
+    }
+
+    public async checkUpcomingReadyAccountJobScheduleExistsForAccountJob(accountJobId: number): Promise<boolean> {
+        validateNotNull(accountJobId, "accountJobId");
+
+        return this.mapper.checkUpcomingReadyAccountJobScheduleExistsForAccountJob(accountJobId, this.timeSource.getNow());
+    }
+
+    public getLastSuccessfulAccountJobExecution(accountJobId: number): Promise<Date | null> {
+        validateNotNull(accountJobId, "accountJobId");
+
+        return this.mapper.getLastSuccessfulAccountJobExecution(accountJobId);
+    }
+
+    public getNextScheduledAccountJobRun(accountJobId: number): Promise<Date | null> {
+        validateNotNull(accountJobId, "accountJobId");
+
+        return this.mapper.getNextScheduledAccountJobRun(accountJobId);
     }
 
 }

@@ -11,11 +11,13 @@ import { getAccountJobScheduleRouteProviders } from "@src/api/v1/account-job-sch
 import { getLoginRouteProviders } from "@src/api//v1/login/route-providers";
 import { getOpsRouteProviders } from "@src/api/v1/ops/route-providers";
 import { getDashboardRouteProviders } from "@src/api/v1/dashboard/route-providers";
+import { getAccountJobRouteProviders } from "./v1/account-job/route-providers";
 
 export function getRouteProviders(): RouteProvider<any, any>[] {
 
     return [
         ...getAccountRouteProviders(),
+        ...getAccountJobRouteProviders(),
         ...getAccountJobScheduleRouteProviders(),
         ...getAccountTokenRouteProviders(),
         ...getArtistApiRouteProviders(),

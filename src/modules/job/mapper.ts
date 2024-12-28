@@ -11,6 +11,7 @@ export class JobMapper {
             select
                 id,
                 name,
+                display_name,
                 enabled,
                 interval_ms,
                 initial_delay_ms,

@@ -2,6 +2,9 @@ import sql from "@src/db/db";
 import { AccountJobDao } from "@src/models/classes/dao/account-job";
 import { CreateAccountJobDto } from "@src/models/classes/dto/create-account-job";
 import { AccountJobDaoInterface } from "@src/models/dao/account-job.dao";
+import { IdInterface } from "@src/models/dao/id.dao";
+import { determineSortComparison, determineSortOrder, SortOrder } from "@src/modules/pagination/constants";
+import { removeNull } from "@src/util/common";
 
 export class AccountJobMapper {
 
@@ -41,6 +44,48 @@ export class AccountJobMapper {
         }
     
         return AccountJobDao.fromDaoInterface(result[0]);
+    }
+
+    public async getByAccountId(accountId: number, lastSeen: number, order: SortOrder, limit: number): Promise<AccountJobDao[]> {
+        const result = await sql<AccountJobDaoInterface[]>`
+            select
+                id,
+                account_id,
+                job_id,
+                interval_seconds,
+                failure_count,
+                enabled,
+                created_at,
+                updated_at
+            from
+                account_jobs
+            where
+                account_id = ${ accountId }
+                and id ${determineSortComparison(order)} ${ lastSeen }
+            order by
+                id ${determineSortOrder(order)}
+            limit ${limit}
+        `;
+    
+        if (!result || result.length === 0) {
+            return [];
+        }
+    
+        return result.map(item => AccountJobDao.fromDaoInterface(item)).filter(removeNull) as AccountJobDao[];
+    }
+
+    public async checkAccountJobExists(accountId: number, accountJobId: number): Promise<boolean> {
+        const result = await sql<IdInterface[]>`
+            select
+                id
+            from
+                account_jobs
+            where
+                id = ${ accountJobId }
+                and account_id = ${ accountId }
+        `;
+
+        return !!result && result.length === 1;
     }
 
     public async increaseFailureCount(id: number): Promise<void> {

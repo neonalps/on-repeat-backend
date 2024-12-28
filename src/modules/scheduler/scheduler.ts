@@ -27,13 +27,13 @@ export class Scheduler {
     }
 
     public async run(): Promise<void> {
-        this.schedule();
+        await this.schedule();
         this.scheduleNextRun();
     }
 
     private scheduleNextRun(): void {
-        setTimeout(() => {
-            this.schedule();
+        setTimeout(async () => {
+            await this.schedule();
             this.scheduleNextRun();
         }, Scheduler.SCHEDULE_INTERVAL_SECONDS * 1000);
     }

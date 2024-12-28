@@ -61,7 +61,7 @@ export class DependencyHelper {
         const accountJobService = new AccountJobService(accountJobMapper);
 
         const accountJobScheduleMapper = new AccountJobScheduleMapper();
-        const accountJobScheduleService = new AccountJobScheduleService(accountJobScheduleMapper, uuidSource);
+        const accountJobScheduleService = new AccountJobScheduleService(accountJobScheduleMapper, timeSource, uuidSource);
 
         const jobMapper = new JobMapper();
         const jobService = new JobService(jobMapper);

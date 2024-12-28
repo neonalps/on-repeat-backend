@@ -10,8 +10,6 @@ export class CryptoService {
     private static readonly JOIN_CHAR = ":";
     private static readonly KEY_BUFFER = Buffer.from(KeyProvider.getCryptoKey(), CryptoService.HEX);
 
-    constructor() {}
-
     public encrypt(plaintext: string): string {
         const iv = this.getIv();
         const cipher = crypto.createCipheriv(CryptoService.ENCRYPTION_ALGORITHM, CryptoService.KEY_BUFFER, iv)
@@ -21,8 +19,7 @@ export class CryptoService {
     
     public decrypt(ciphertext: string): string {
         const ciphertextParts = ciphertext.split(CryptoService.JOIN_CHAR);
-    
-        if (!ciphertextParts || ciphertextParts.length != 2) {
+        if (!ciphertextParts || ciphertextParts.length !== 2) {
             throw new Error("Invalid ciphertext provided");
         }
     

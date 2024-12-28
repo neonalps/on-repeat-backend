@@ -7,6 +7,7 @@ import { PendingQuery, Row } from "postgres";
 import { SortOrder, determineSortComparison, determineSortOrder } from "@src/modules/pagination/constants";
 import { isDefined, removeNull } from "@src/util/common";
 import { JobStatus } from "@src/models/enum/job-status";
+import { IdInterface } from "@src/models/dao/id.dao";
 
 export class AccountJobScheduleMapper {
  
@@ -113,6 +114,57 @@ export class AccountJobScheduleMapper {
             where
                 id = ${ id }
         `;
+    }
+
+    public async getLastSuccessfulAccountJobExecution(accountJobId: number): Promise<Date | null> {
+        const result = await sql<AccountJobScheduleDaoInterface[]>`
+            ${ this.commonAccountJobScheduleSelect() }
+            where
+                account_job_id = ${ accountJobId } and
+                state = 'SUCCEEDED'
+            order by
+                finished_at DESC
+            limit 1
+        `;
+    
+        if (!result || result.length === 0) {
+            return null;
+        }
+    
+        return (AccountJobScheduleDao.fromDaoInterface(result[0]) as AccountJobScheduleDao).finishedAt;
+    }
+
+    public async getNextScheduledAccountJobRun(accountJobId: number): Promise<Date | null> {
+        const result = await sql<AccountJobScheduleDaoInterface[]>`
+            ${ this.commonAccountJobScheduleSelect() }
+            where
+                account_job_id = ${ accountJobId } and
+                state = 'READY'
+            order by
+                scheduled_after DESC
+            limit 1 
+        `;
+    
+        if (!result || result.length === 0) {
+            return null;
+        }
+    
+        return (AccountJobScheduleDao.fromDaoInterface(result[0]) as AccountJobScheduleDao).scheduledAfter;
+    }
+
+    public async checkUpcomingReadyAccountJobScheduleExistsForAccountJob(accountJobId: number, now: Date): Promise<boolean> {
+        const result = await sql<IdInterface[]>`
+            select
+                id
+            from
+                account_jobs_schedules
+            where
+                account_job_id = ${ accountJobId }
+                and state = 'READY'
+                and scheduled_after >= ${ now }
+        `;
+
+        return !!result && result.length >= 1;
     }
 
     private commonAccountJobScheduleSelect(): PendingQuery<Row[]> {
