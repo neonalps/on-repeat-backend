@@ -13,6 +13,8 @@ import { GetPlayedTrackHistoryPaginatedHandler } from "@src/api/v1/played-tracks
 import { UpdatePlayedTrackByIdHandler } from "@src/api/v1/played-tracks/update-by-id/handler";
 import { UpdatePlayedTrackByIdRouteProvider } from "@src/api/v1/played-tracks/update-by-id/route-provider";
 import { AuthHelper } from "@src/modules/auth/helper";
+import { UpdateIncludeInStatisticsForPeriodHandler } from "@src/api/v1/played-tracks/update-include-in-statistics-period/handler";
+import { UpdateIncludeInStatisticsForPeriodRouteProvider } from "@src/api/v1/played-tracks/update-include-in-statistics-period/route-provider";
 
 export function getPlayedTracksApiRouteProviders() {
     const apiHelper = dependencyManager.get<ApiHelper>(Dependencies.ApiHelper);
@@ -25,11 +27,13 @@ export function getPlayedTracksApiRouteProviders() {
     const getTrackHistoryPaginatedHandler = new GetPlayedTrackHistoryPaginatedHandler(apiHelper, paginationService, playedTrackService);
     const getArtistPlayedTracksPaginatedHandler = new GetArtistPlayedTracksPaginatedHandler(apiHelper, catalogueService, paginationService, playedTrackService);
     const updatePlayedTrackByIdHandler = new UpdatePlayedTrackByIdHandler(apiHelper, authHelper, playedTrackService);
+    const updateIncludeInStatisticsForPeriodHandler = new UpdateIncludeInStatisticsForPeriodHandler(apiHelper, playedTrackService);
 
     return [
         new GetPlayedTracksPaginatedRouteProvider(getAllPaginatedHandler),
         new GetPlayedTrackHistoryPaginatedRouteProvider(getTrackHistoryPaginatedHandler),
         new GetArtistPlayedTracksPaginatedRouteProvider(getArtistPlayedTracksPaginatedHandler),
         new UpdatePlayedTrackByIdRouteProvider(updatePlayedTrackByIdHandler),
+        new UpdateIncludeInStatisticsForPeriodRouteProvider(updateIncludeInStatisticsForPeriodHandler),
     ];
 };

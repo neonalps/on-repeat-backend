@@ -9,10 +9,10 @@ import { DetailedArtistChartApiDto } from "@src/models/api/detailed-artist";
 import { DetailedTrackChartApiDto } from "@src/models/api/detailed-track";
 import { ImageApiDto } from "@src/models/api/image";
 import { PlayedHistoryApiDto } from "@src/models/api/played-history";
+import { PlayedInfoApiDto } from "@src/models/api/played-info";
 import { PlayedTrackApiDto } from "@src/models/api/played-track";
 import { TrackApiDto } from "@src/models/api/track";
 import { AccountChartDao } from "@src/models/classes/dao/account-chart";
-import { AccountJobDao } from "@src/models/classes/dao/account-job";
 import { AccountJobScheduleDao } from "@src/models/classes/dao/account-job-schedule";
 import { AccountTokenDao } from "@src/models/classes/dao/account-token";
 import { AlbumDao } from "@src/models/classes/dao/album";
@@ -20,6 +20,7 @@ import { SimpleAlbumDao } from "@src/models/classes/dao/album-simple";
 import { ArtistDao } from "@src/models/classes/dao/artist";
 import { ArtistTrackChartItemDao } from "@src/models/classes/dao/artist-track-chart-item";
 import { ImageDao } from "@src/models/classes/dao/image";
+import { PlayedInfoDao } from "@src/models/classes/dao/played-info";
 import { PlayedTrackDetailsDao } from "@src/models/classes/dao/played-track-details";
 import { PlayedTrackHistoryDao } from "@src/models/classes/dao/played-track-history";
 import { SimpleTrackDetailsDao } from "@src/models/classes/dao/simple-track-details";
@@ -256,6 +257,14 @@ export class ApiHelper {
             place: item.place,
             playCount: item.playCount,
             track: this.convertTrackApiDto(track, artists, album),
+        };
+    }
+
+    public convertPlayedInfo(playedInfo: PlayedInfoDao): PlayedInfoApiDto {
+        return {
+            timesPlayed: playedInfo.timesPlayed,
+            firstPlayedAt: playedInfo.firstPlayedAt,
+            lastPlayedAt: playedInfo.lastPlayedAt,
         };
     }
 
