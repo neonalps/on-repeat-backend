@@ -72,7 +72,6 @@ export class SpotifyMusicProvider extends MusicProvider {
 
         if (lastSeenPlayedTrack === null || this.isPlayedAtTimestampInResponse(lastSeenPlayedTrack.playedAt, initiallyFetchedTracks)) {
             await this.fetchAndProcessMissingArtistImages(accountId, initiallyFetchedSpotifyArtistIds);
-            console.log('first fetch or played at timestamp was found in response; no additional fetching necessary');
             return;
         }
 
@@ -137,12 +136,8 @@ export class SpotifyMusicProvider extends MusicProvider {
         const artistIdsWithMissingImages = await this.musicProviderService.getArtistIdsWithoutImagesForMusicProvider(this.getProviderId(), artistIds);
 
         if (artistIdsWithMissingImages.length === 0) {
-            console.log('no artists with missing images');
             return;
         }
-
-        const needsPlural = artistIdsWithMissingImages.length !== 1;
-        console.log(`${artistIdsWithMissingImages.length} artist${needsPlural ? 's' : ''} need${!needsPlural ? 's' : ''} image fetching`);
 
         const createArtistImageDtos: CreateArtistImageDto[] = [];
 
